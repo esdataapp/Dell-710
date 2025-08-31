@@ -37,20 +37,20 @@ PropertyScraper-Dell710/
 │   └── tro.py               # Trovit scraper
 ├── orchestrator/             # Sistema de orquestación concurrente
 │   ├── advanced_orchestrator.py
-│   ├── quick_launcher.py
-│   └── resource_monitor.py
+│   ├── bimonthly_scheduler.py
+│   └── concurrent_manager.py
 ├── utils/                    # Utilidades y herramientas
 │   ├── create_data_structure.py
-│   ├── ssh_connector.py
-│   └── data_validator.py
+│   ├── checkpoint_recovery.py
+│   ├── gdrive_backup_manager.py
+│   ├── enhanced_scraps_registry.py
+│   └── url_utils.py
 ├── config/                   # Configuraciones del sistema
 │   ├── dell_t710_config.yaml
 │   ├── Lista de URLs.csv    # Configuración central de URLs con jerarquía
 │   └── ssh_config.json
 ├── monitoring/               # Sistema de monitoreo
-│   ├── performance_monitor.py
-│   ├── error_handler.py
-│   └── progress_tracker.py
+│   └── performance_monitor.py
 ├── logs/                     # Logs del sistema
 ├── data/                     # Datos estructurados con nueva nomenclatura
 │   ├── inm24/               # Inmuebles24 data
@@ -64,9 +64,7 @@ PropertyScraper-Dell710/
 │   ├── prop/                # Propiedades data
 │   └── tro/                 # Trovit data
 ├── ssh_deployment/           # Scripts de despliegue SSH
-│   ├── deploy_to_dell710.py
-│   ├── remote_executor.py
-│   └── sync_results.py
+│   └── remote_executor.py
 └── docs/                     # Documentación completa
 ```
 
@@ -150,7 +148,7 @@ data/inm24/venta/ago2025/1/
 ssh scraper@192.168.50.54
 
 # Ejecución de scraper específico
-python3 /home/scraper/PropertyScraper-Dell710/orchestrator/run_inmuebles24.py
+python3 /home/scraper/PropertyScraper-Dell710/scrapers/inm24.py
 
 # Monitoreo en tiempo real
 tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
@@ -177,12 +175,7 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
    python utils/create_data_structure.py
    ```
 
-2. **Configurar SSH**:
-   ```bash
-   python ssh_deployment/setup_ssh_connection.py
-   ```
-
-3. **Ejecutar scraper individual**:
+2. **Ejecutar scraper individual**:
    ```bash
    # Inmuebles24 general
    python scrapers/inm24.py --headless --pages=100
@@ -194,14 +187,14 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
    python scrapers/lam.py --headless --pages=75
    ```
 
-4. **Ejecutar orquestación completa**:
+3. **Ejecutar orquestación completa**:
    ```bash
    python orchestrator/advanced_orchestrator.py
    ```
 
-5. **Launcher rápido para testeo**:
+4. **Programar ejecución bi-mensual**:
    ```bash
-   python orchestrator/quick_launcher.py
+   python orchestrator/bimonthly_scheduler.py
    ```
 
 ## 🏆 Resultados Probados
@@ -217,11 +210,7 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
 - **8 Scrapers**: Todos funcionales con nueva nomenclatura
 - **SeleniumBase**: Configuración estandarizada y compatible
 - **Estructura de datos**: Optimizada con abreviaciones
-- **Lista de URLs.csv**: Configuración centralizada con jerarquía
-- **URLs/*_urls.csv**: Archivos de entrada para cada scraper. Comienzan con una
-  línea de comentario describiendo el formato
-  `PaginaWeb,Ciudad,Operación,ProductoPaginaWeb,URL`. El encabezado `URL` es
-  tolerante a mayúsculas/minúsculas (`URL`, `Url`, `url`).
+- **Lista de URLs.csv**: Única fuente de URLs del sistema (los CSV individuales en `URLs/` son legado).
 
 ---
 
