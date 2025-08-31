@@ -1,0 +1,26 @@
+2025-08-30 18:55:10,149 - INFO - Iniciando tests de todos los scrapers
+2025-08-30 18:55:10,149 - INFO - Testing inm24...
+2025-08-30 18:55:10,150 - INFO - Ejecutando test de inm24: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\inm24 (prueba).py --url https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/ --headless --pages 1
+2025-08-30 18:55:29,579 - INFO - Test inm24 exitoso en 19.43s
+2025-08-30 18:55:31,580 - INFO - Testing cyt...
+2025-08-30 18:55:31,580 - INFO - Ejecutando test de cyt: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\cyt (prueba).py --url https://www.casasyterrenos.com/inmuebles/venta/df --headless --pages 1
+2025-08-30 18:55:32,641 - ERROR - Test cyt falló con código 1
+2025-08-30 18:55:34,642 - INFO - Testing mit...
+2025-08-30 18:55:34,642 - INFO - Ejecutando test de mit: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\mit (prueba).py --url https://www.mitula.mx/casas/venta-distrito-federal --headless --pages 1
+2025-08-30 18:55:35,664 - ERROR - Test mit falló con código 1
+2025-08-30 18:55:37,665 - INFO - Testing lam...
+2025-08-30 18:55:37,665 - INFO - Ejecutando test de lam: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\lam (prueba).py --url https://www.lamudi.com.mx/distrito-federal/for-sale/ --headless --pages 1
+2025-08-30 18:55:38,701 - ERROR - Test lam falló con código 2
+2025-08-30 18:55:40,702 - INFO - Testing prop...
+2025-08-30 18:55:40,702 - INFO - Ejecutando test de prop: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\prop (prueba).py --url https://www.propiedades.com/df/en-venta --headless --pages 1
+2025-08-30 18:55:41,732 - ERROR - Test prop falló con código 2
+2025-08-30 18:55:43,733 - INFO - Testing tro...
+2025-08-30 18:55:43,733 - INFO - Ejecutando test de tro: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\tro (prueba).py --url https://www.trovit.mx/casas-distrito-federal --headless --pages 1
+2025-08-30 18:56:03,750 - INFO - Test tro exitoso en 20.02s
+2025-08-30 18:56:05,751 - INFO - Testing inm24_det...
+2025-08-30 18:56:05,751 - INFO - Ejecutando test de inm24_det: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\inm24_det (prueba).py --urls-file C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_urls_sample.txt --headless --properties 1
+2025-08-30 18:56:27,957 - INFO - Test inm24_det exitoso en 22.21s
+2025-08-30 18:56:29,958 - INFO - Testing lam_det...
+2025-08-30 18:56:29,958 - INFO - Ejecutando test de lam_det: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\lam_det (prueba).py --urls-file C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_urls_sample.txt --headless --properties 1
+2025-08-30 18:56:31,025 - ERROR - Test lam_det falló con código 1
+2025-08-30 18:56:33,025 - INFO - Tests completados: 3/8 exitosos en 82.88s

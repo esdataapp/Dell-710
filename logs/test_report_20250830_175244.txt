@@ -1,0 +1,43 @@
+
+🧪 REPORTE DE PRUEBAS - PropertyScraper Dell710
+============================================================
+Fecha: 2025-08-30 17:52:44
+Total de scrapers: 8
+Tests exitosos: 3
+Tests fallidos: 5
+Tiempo total: 80.91s
+============================================================
+
+📊 RESULTADOS DETALLADOS:
+
+inm24        ✅ EXITOSO (18.20s)
+cyt          ❌ FALLIDO (1.14s)
+             Error: Unknown error
+             --- Logging error ---...
+mit          ❌ FALLIDO (1.07s)
+             Error: Unknown error
+             --- Logging error ---...
+lam          ❌ FALLIDO (1.07s)
+             Error: Unknown error
+             usage: lam (prueba).py [-h] [--headless] [--pages PAGES] [--resume RESUME]...
+prop         ❌ FALLIDO (1.07s)
+             Error: Unknown error
+             usage: prop (prueba).py [-h] [--headless] [--pages PAGES] [--resume RESUME]...
+tro          ✅ EXITOSO (19.07s)
+inm24_det    ✅ EXITOSO (22.17s)
+lam_det      ❌ FALLIDO (1.10s)
+             Error: Unknown error
+             --- Logging error ---...
+
+============================================================
+⚠️  SCRAPERS QUE REQUIEREN ATENCIÓN:
+   • cyt
+   • mit
+   • lam
+   • prop
+   • lam_det
+
+💡 RECOMENDACIONES:
+   • Revisar logs detallados de scrapers fallidos
+   • Verificar conectividad a sitios web objetivo
+   • Comprobar selectores CSS actualizados

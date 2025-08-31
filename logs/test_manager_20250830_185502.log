@@ -1,0 +1,2 @@
+2025-08-30 18:55:02,674 - INFO - Ejecutando test de lam: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\lam (prueba).py --url https://www.lamudi.com.mx/distrito-federal/for-sale/ --headless --pages 1
+2025-08-30 18:55:03,726 - ERROR - Test lam falló con código 2

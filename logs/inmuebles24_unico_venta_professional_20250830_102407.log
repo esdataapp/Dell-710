@@ -1,0 +1,12 @@
+2025-08-30 10:24:07 |     INFO | 📂 Cargadas 5 URLs desde C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_urls_sample.txt
+2025-08-30 10:24:07 |     INFO | 🚀 Iniciando Inmuebles24 Unico Professional Scraper
+2025-08-30 10:24:07 |     INFO |    URLs file: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_urls_sample.txt
+2025-08-30 10:24:07 |     INFO |    Total URLs: 5
+2025-08-30 10:24:07 |     INFO |    Operation: venta
+2025-08-30 10:24:07 |     INFO |    Max properties: 3
+2025-08-30 10:24:07 |     INFO |    Resume from: 0
+2025-08-30 10:24:07 |     INFO |    Headless: True
+2025-08-30 10:24:07 |     INFO | 🚀 Iniciando scraping detallado de propiedades Inmuebles24
+2025-08-30 10:24:07 |     INFO | ======================================================================
+2025-08-30 10:24:07 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 10:24:12 |     INFO | 🏠 Procesando propiedad 1/5: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-col.-puerta-del-valle.-146804538.html

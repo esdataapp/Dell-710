@@ -1,0 +1,53 @@
+2025-08-30 10:41:12 |     INFO | 📂 Cargadas 5 URLs desde data/test_urls_sample.txt
+2025-08-30 10:41:12 |     INFO | 🚀 Iniciando Inmuebles24 Unico Professional Scraper
+2025-08-30 10:41:12 |     INFO |    URLs file: data/test_urls_sample.txt
+2025-08-30 10:41:12 |     INFO |    Total URLs: 5
+2025-08-30 10:41:12 |     INFO |    Operation: venta
+2025-08-30 10:41:12 |     INFO |    Max properties: None
+2025-08-30 10:41:12 |     INFO |    Resume from: 0
+2025-08-30 10:41:12 |     INFO |    Headless: True
+2025-08-30 10:41:12 |     INFO | 🚀 Iniciando scraping detallado de propiedades Inmuebles24
+2025-08-30 10:41:12 |     INFO | ======================================================================
+2025-08-30 10:41:12 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 10:41:17 |     INFO | 🏠 Procesando propiedad 1/5: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-col.-puerta-del-valle.-146804538.html
+2025-08-30 10:41:26 |     INFO | 🔍 Iniciando extracción de datos para URL: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-col.-puerta-del-valle.-146804538.html
+2025-08-30 10:41:27 |     INFO | 📢 Detectada propiedad patrocinada
+2025-08-30 10:41:27 |     INFO | ✅ Datos básicos extraídos de propiedad patrocinada
+2025-08-30 10:41:27 |     INFO | ✅ Datos extraídos exitosamente para propiedad 1
+2025-08-30 10:41:27 |     INFO | 📊 Progreso - Procesadas: 1 | Exitosas: 1 | Tasa éxito: 100.0% | Tiempo: 14.9s/prop
+2025-08-30 10:41:30 |     INFO | 🏠 Procesando propiedad 2/5: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-y-renta-puerta-de-hierro-the-145898747.html
+2025-08-30 10:41:39 |     INFO | 🔍 Iniciando extracción de datos para URL: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-y-renta-puerta-de-hierro-the-145898747.html
+2025-08-30 10:41:39 |     INFO | 📢 Detectada propiedad patrocinada
+2025-08-30 10:41:39 |     INFO | ✅ Datos básicos extraídos de propiedad patrocinada
+2025-08-30 10:41:39 |     INFO | ✅ Datos extraídos exitosamente para propiedad 2
+2025-08-30 10:41:39 |     INFO | 📊 Progreso - Procesadas: 2 | Exitosas: 2 | Tasa éxito: 100.0% | Tiempo: 13.9s/prop
+2025-08-30 10:41:42 |     INFO | 🏠 Procesando propiedad 3/5: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-en-country-club-guadalajara-146755337.html
+2025-08-30 10:41:52 |     INFO | 🔍 Iniciando extracción de datos para URL: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-en-country-club-guadalajara-146755337.html
+2025-08-30 10:41:52 |     INFO | 📢 Detectada propiedad patrocinada
+2025-08-30 10:41:52 |     INFO | ✅ Datos básicos extraídos de propiedad patrocinada
+2025-08-30 10:41:52 |     INFO | ✅ Datos extraídos exitosamente para propiedad 3
+2025-08-30 10:41:52 |     INFO | 📊 Progreso - Procesadas: 3 | Exitosas: 3 | Tasa éxito: 100.0% | Tiempo: 13.5s/prop
+2025-08-30 10:41:55 |     INFO | 🏠 Procesando propiedad 4/5: https://www.inmuebles24.com/propiedades/clasificado/veclapin-ph-en-venta-en-torre-citela-91369040.html
+2025-08-30 10:42:05 |     INFO | 🔍 Iniciando extracción de datos para URL: https://www.inmuebles24.com/propiedades/clasificado/veclapin-ph-en-venta-en-torre-citela-91369040.html
+2025-08-30 10:42:05 |     INFO | 📢 Detectada propiedad patrocinada
+2025-08-30 10:42:05 |     INFO | ✅ Datos básicos extraídos de propiedad patrocinada
+2025-08-30 10:42:05 |     INFO | ✅ Datos extraídos exitosamente para propiedad 4
+2025-08-30 10:42:05 |     INFO | 📊 Progreso - Procesadas: 4 | Exitosas: 4 | Tasa éxito: 100.0% | Tiempo: 13.4s/prop
+2025-08-30 10:42:08 |     INFO | 🏠 Procesando propiedad 5/5: https://www.inmuebles24.com/propiedades/clasificado/veclapin-conjunto-de-5-departamentos-en-venta-en-jardines-de-146890624.html
+2025-08-30 10:42:18 |     INFO | 🔍 Iniciando extracción de datos para URL: https://www.inmuebles24.com/propiedades/clasificado/veclapin-conjunto-de-5-departamentos-en-venta-en-jardines-de-146890624.html
+2025-08-30 10:42:18 |     INFO | 📢 Detectada propiedad patrocinada
+2025-08-30 10:42:18 |     INFO | ✅ Datos básicos extraídos de propiedad patrocinada
+2025-08-30 10:42:18 |     INFO | ✅ Datos extraídos exitosamente para propiedad 5
+2025-08-30 10:42:18 |     INFO | 📊 Progreso - Procesadas: 5 | Exitosas: 5 | Tasa éxito: 100.0% | Tiempo: 13.3s/prop
+2025-08-30 10:42:23 |     INFO | 💾 Resultados guardados:
+2025-08-30 10:42:23 |     INFO |    📄 CSV Detalles: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\inmuebles24\venta\Agosto 2025\2do_script_del_mes\inmuebles24_unico_venta_detalles_agosto_2025_20250830_104223.csv
+2025-08-30 10:42:23 |     INFO |    📋 Metadata: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\inmuebles24\venta\Agosto 2025\2do_script_del_mes\metadata_unico_20250830_104223.json
+2025-08-30 10:42:23 |     INFO | ======================================================================
+2025-08-30 10:42:23 |     INFO | 🎉 SCRAPING DETALLADO COMPLETADO EXITOSAMENTE
+2025-08-30 10:42:23 |     INFO | 📊 Propiedades procesadas: 5
+2025-08-30 10:42:23 |     INFO | ✅ Extracciones exitosas: 5
+2025-08-30 10:42:23 |     INFO | ❌ Errores: 0
+2025-08-30 10:42:23 |     INFO | ⏱️  Tiempo total: 0:01:11.799223
+2025-08-30 10:42:23 |     INFO | ⚡ Promedio por propiedad: 14.4s
+2025-08-30 10:42:23 |     INFO | ✅ Tasa de éxito: 100.0%
+2025-08-30 10:42:23 |     INFO | ======================================================================

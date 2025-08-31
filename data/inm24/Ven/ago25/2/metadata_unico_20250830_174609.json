@@ -1,0 +1,22 @@
+{
+  "execution_info": {
+    "timestamp": "20250830_174609",
+    "operation_type": "venta",
+    "total_urls_provided": 5,
+    "properties_processed": 1,
+    "successful_extractions": 1,
+    "errors_count": 0,
+    "execution_time_seconds": 21.058206,
+    "csv_filename": "inm24_ago25_2.csv",
+    "log_filename": "inmuebles24_unico_venta_professional_20250830_174548.log",
+    "urls_file_used": "C:\\Users\\criss\\Desktop\\TRABAJANDO\\0. Scrapts\\Scraps_Esdata\\PropertyScraper-Dell710\\data\\test_urls_sample.txt"
+  },
+  "system_info": {
+    "scraper_version": "1.0.0",
+    "scraper_type": "detailed_individual_properties",
+    "python_version": "3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)]",
+    "headless_mode": true,
+    "max_properties_limit": 1,
+    "resume_from_index": 0
+  }
+}

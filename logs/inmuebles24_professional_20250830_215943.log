@@ -1,0 +1,74 @@
+2025-08-30 21:59:43 |     INFO | 🧪 MODO PRUEBA EXTENDIDA - Inmuebles24 Professional Scraper
+2025-08-30 21:59:43 |     INFO |    URL objetivo: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/
+2025-08-30 21:59:43 |     INFO |    Archivo salida: None
+2025-08-30 21:59:43 |     INFO |    Max pages (extendido): 10
+2025-08-30 21:59:43 |     INFO |    Resume from: 1
+2025-08-30 21:59:43 |     INFO |    Headless: True
+2025-08-30 21:59:43 |     INFO |    ⚡ Test mode extendido: 10 páginas, hasta 50 propiedades/página
+2025-08-30 21:59:43 |     INFO | 🚀 Iniciando scraping profesional de inmuebles24.com
+2025-08-30 21:59:43 |     INFO | ======================================================================
+2025-08-30 21:59:43 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 21:59:49 |     INFO | 📄 Procesando página 1: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/
+2025-08-30 21:59:54 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 21:59:54 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 21:59:55 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 21:59:55 |     INFO | 📊 Progreso - Página: 1 | Propiedades: 27 | Total: 27 | Tiempo: 12.5s/página
+2025-08-30 21:59:56 |     INFO | ✅ Paginación detectada con selector: a[href*="pagina"]
+2025-08-30 21:59:59 |     INFO | 📄 Procesando página 2: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=2
+2025-08-30 22:00:05 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:00:05 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:00:06 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:00:06 |     INFO | 📊 Progreso - Página: 2 | Propiedades: 27 | Total: 54 | Tiempo: 11.5s/página
+2025-08-30 22:00:10 |     INFO | 📄 Procesando página 3: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=3
+2025-08-30 22:00:15 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:00:15 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:00:16 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:00:16 |     INFO | 📊 Progreso - Página: 3 | Propiedades: 27 | Total: 81 | Tiempo: 11.1s/página
+2025-08-30 22:00:20 |     INFO | 📄 Procesando página 4: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=4
+2025-08-30 22:00:25 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:00:25 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:00:26 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:00:26 |     INFO | 📊 Progreso - Página: 4 | Propiedades: 27 | Total: 108 | Tiempo: 10.9s/página
+2025-08-30 22:00:30 |     INFO | 📄 Procesando página 5: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=5
+2025-08-30 22:00:35 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:00:35 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:00:36 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:00:36 |     INFO | 📊 Progreso - Página: 5 | Propiedades: 27 | Total: 135 | Tiempo: 10.7s/página
+2025-08-30 22:00:39 |     INFO | 📄 Procesando página 6: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=6
+2025-08-30 22:00:45 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:00:45 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:00:46 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:00:46 |     INFO | 📊 Progreso - Página: 6 | Propiedades: 27 | Total: 162 | Tiempo: 10.5s/página
+2025-08-30 22:00:48 |     INFO | 📄 Procesando página 7: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=7
+2025-08-30 22:00:54 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:00:54 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:00:55 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:00:55 |     INFO | 📊 Progreso - Página: 7 | Propiedades: 27 | Total: 189 | Tiempo: 10.3s/página
+2025-08-30 22:00:57 |     INFO | 📄 Procesando página 8: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=8
+2025-08-30 22:01:02 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:01:02 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:01:03 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:01:03 |     INFO | 📊 Progreso - Página: 8 | Propiedades: 27 | Total: 216 | Tiempo: 10.1s/página
+2025-08-30 22:01:06 |     INFO | 📄 Procesando página 9: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=9
+2025-08-30 22:01:11 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:01:11 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:01:12 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:01:12 |     INFO | 📊 Progreso - Página: 9 | Propiedades: 27 | Total: 243 | Tiempo: 9.9s/página
+2025-08-30 22:01:15 |     INFO | 📄 Procesando página 10: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/?pagina=10
+2025-08-30 22:01:21 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 22:01:21 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 22:01:22 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 22:01:22 |     INFO | 💾 Checkpoint guardado: página 10
+2025-08-30 22:01:22 |     INFO | 📊 Progreso - Página: 10 | Propiedades: 27 | Total: 270 | Tiempo: 9.9s/página
+2025-08-30 22:01:25 |     INFO | 🏁 Límite de páginas alcanzado: 10
+2025-08-30 22:01:28 |     INFO | 💾 Resultados guardados en: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\inm24\ven\ago25\2\I24_URLs_ago25_2.csv
+2025-08-30 22:01:28 |     INFO | 🗑️  Checkpoint limpiado
+2025-08-30 22:01:28 |     INFO | ======================================================================
+2025-08-30 22:01:28 |     INFO | 🎉 SCRAPING COMPLETADO EXITOSAMENTE
+2025-08-30 22:01:28 |     INFO | 📊 Páginas procesadas: 10
+2025-08-30 22:01:28 |     INFO | 🏠 Propiedades encontradas: 270
+2025-08-30 22:01:28 |     INFO | ❌ Errores: 0
+2025-08-30 22:01:28 |     INFO | ⏱️  Tiempo total: 0:01:44.701212
+2025-08-30 22:01:28 |     INFO | ⚡ Promedio por página: 10.5s
+2025-08-30 22:01:28 |     INFO | ✅ Tasa de éxito: 100.0%
+2025-08-30 22:01:28 |     INFO | ======================================================================

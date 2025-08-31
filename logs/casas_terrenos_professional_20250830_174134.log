@@ -1,0 +1,10 @@
+2025-08-30 17:41:34 |     INFO | 🚀 Iniciando Casas y Terrenos Professional Scraper
+2025-08-30 17:41:34 |     INFO |    URL objetivo: https://www.casasyterrenos.com/inmuebles/venta/df
+2025-08-30 17:41:34 |     INFO |    Archivo salida: None
+2025-08-30 17:41:34 |     INFO |    Max pages: 1
+2025-08-30 17:41:34 |     INFO |    Resume from: 1
+2025-08-30 17:41:34 |     INFO |    Headless: True
+2025-08-30 17:41:34 |     INFO | 🚀 Iniciando scraping profesional de casasyterrenos.com
+2025-08-30 17:41:34 |     INFO | ======================================================================
+2025-08-30 17:41:34 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 17:41:34 |    ERROR | ❌ Error fatal en scraping: SB() got an unexpected keyword argument 'disable_dev_shm_usage'

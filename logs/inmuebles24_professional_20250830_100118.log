@@ -1,0 +1,10 @@
+2025-08-30 10:01:18 |     INFO | 🚀 Iniciando Inmuebles24 Professional Scraper
+2025-08-30 10:01:18 |     INFO |    URL objetivo: https://www.inmuebles24.com/departamentos-en-venta-en-zapopan.html
+2025-08-30 10:01:18 |     INFO |    Archivo salida: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_inmuebles24_zapopan_departamentos.csv
+2025-08-30 10:01:18 |     INFO |    Max pages: 10
+2025-08-30 10:01:18 |     INFO |    Resume from: 1
+2025-08-30 10:01:18 |     INFO |    Headless: False
+2025-08-30 10:01:18 |     INFO | 🚀 Iniciando scraping profesional de inmuebles24.com
+2025-08-30 10:01:18 |     INFO | ======================================================================
+2025-08-30 10:01:18 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 10:01:18 |    ERROR | ❌ Error fatal en scraping: SB() got an unexpected keyword argument 'maximize_window'

@@ -1,0 +1,29 @@
+2025-08-30 17:46:17 |     INFO | 📂 Cargadas 5 URLs desde C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_urls_sample.txt
+2025-08-30 17:46:17 |     INFO | 🚀 Iniciando Inmuebles24 Unico Professional Scraper
+2025-08-30 17:46:17 |     INFO |    URLs file: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_urls_sample.txt
+2025-08-30 17:46:17 |     INFO |    Total URLs: 5
+2025-08-30 17:46:17 |     INFO |    Operation: venta
+2025-08-30 17:46:17 |     INFO |    Max properties: 1
+2025-08-30 17:46:17 |     INFO |    Resume from: 0
+2025-08-30 17:46:17 |     INFO |    Headless: True
+2025-08-30 17:46:17 |     INFO | 🚀 Iniciando scraping detallado de propiedades Inmuebles24
+2025-08-30 17:46:17 |     INFO | ======================================================================
+2025-08-30 17:46:17 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 17:46:23 |     INFO | 🏠 Procesando propiedad 1/5: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-col.-puerta-del-valle.-146804538.html
+2025-08-30 17:46:32 |     INFO | 🔍 Iniciando extracción de datos para URL: https://www.inmuebles24.com/propiedades/clasificado/veclapin-departamento-en-venta-col.-puerta-del-valle.-146804538.html
+2025-08-30 17:46:32 |     INFO | 📢 Detectada propiedad patrocinada
+2025-08-30 17:46:32 |     INFO | ✅ Datos básicos extraídos de propiedad patrocinada
+2025-08-30 17:46:32 |     INFO | ✅ Datos extraídos exitosamente para propiedad 1
+2025-08-30 17:46:32 |     INFO | 📊 Progreso - Procesadas: 1 | Exitosas: 1 | Tasa éxito: 100.0% | Tiempo: 15.7s/prop
+2025-08-30 17:46:38 |     INFO | 💾 Resultados guardados:
+2025-08-30 17:46:38 |     INFO |    📄 CSV Detalles: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\inm24\ven\ago25\2\inm24_ago25_2.csv
+2025-08-30 17:46:38 |     INFO |    📋 Metadata: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\inm24\ven\ago25\2\metadata_unico_20250830_174638.json
+2025-08-30 17:46:38 |     INFO | ======================================================================
+2025-08-30 17:46:38 |     INFO | 🎉 SCRAPING DETALLADO COMPLETADO EXITOSAMENTE
+2025-08-30 17:46:38 |     INFO | 📊 Propiedades procesadas: 1
+2025-08-30 17:46:38 |     INFO | ✅ Extracciones exitosas: 1
+2025-08-30 17:46:38 |     INFO | ❌ Errores: 0
+2025-08-30 17:46:38 |     INFO | ⏱️  Tiempo total: 0:00:21.023991
+2025-08-30 17:46:38 |     INFO | ⚡ Promedio por propiedad: 21.0s
+2025-08-30 17:46:38 |     INFO | ✅ Tasa de éxito: 100.0%
+2025-08-30 17:46:38 |     INFO | ======================================================================

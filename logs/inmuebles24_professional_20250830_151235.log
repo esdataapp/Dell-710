@@ -1,0 +1,26 @@
+2025-08-30 15:12:35 |     INFO | 🚀 Iniciando Inmuebles24 Professional Scraper
+2025-08-30 15:12:35 |     INFO |    URL objetivo: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/
+2025-08-30 15:12:35 |     INFO |    Archivo salida: None
+2025-08-30 15:12:35 |     INFO |    Max pages: 1
+2025-08-30 15:12:35 |     INFO |    Resume from: 1
+2025-08-30 15:12:35 |     INFO |    Headless: True
+2025-08-30 15:12:35 |     INFO | 🚀 Iniciando scraping profesional de inmuebles24.com
+2025-08-30 15:12:35 |     INFO | ======================================================================
+2025-08-30 15:12:35 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 15:12:41 |     INFO | 📄 Procesando página 1: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/
+2025-08-30 15:12:46 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 15:12:46 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 15:12:47 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 15:12:47 |     INFO | 📊 Progreso - Página: 1 | Propiedades: 27 | Total: 27 | Tiempo: 12.4s/página
+2025-08-30 15:12:48 |     INFO | ✅ Paginación detectada con selector: a[href*="pagina"]
+2025-08-30 15:12:51 |     INFO | 🏁 Límite de páginas alcanzado: 1
+2025-08-30 15:12:53 |     INFO | 💾 Resultados guardados en: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\inm24\ven\ago25\1\I24_URLs_ago25_1.csv
+2025-08-30 15:12:53 |     INFO | ======================================================================
+2025-08-30 15:12:53 |     INFO | 🎉 SCRAPING COMPLETADO EXITOSAMENTE
+2025-08-30 15:12:53 |     INFO | 📊 Páginas procesadas: 1
+2025-08-30 15:12:53 |     INFO | 🏠 Propiedades encontradas: 27
+2025-08-30 15:12:53 |     INFO | ❌ Errores: 0
+2025-08-30 15:12:53 |     INFO | ⏱️  Tiempo total: 0:00:18.290979
+2025-08-30 15:12:53 |     INFO | ⚡ Promedio por página: 18.3s
+2025-08-30 15:12:53 |     INFO | ✅ Tasa de éxito: 100.0%
+2025-08-30 15:12:53 |     INFO | ======================================================================

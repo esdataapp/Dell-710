@@ -1,0 +1,2 @@
+2025-08-30 17:41:33,004 - INFO - Ejecutando test de cyt: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\cyt (prueba).py --url https://www.casasyterrenos.com/inmuebles/venta/df --headless --pages 1
+2025-08-30 17:41:34,077 - ERROR - Test cyt falló con código 1

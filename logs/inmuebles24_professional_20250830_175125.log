@@ -1,0 +1,27 @@
+2025-08-30 17:51:25 |     INFO | 🧪 MODO PRUEBA - Inmuebles24 Professional Scraper
+2025-08-30 17:51:25 |     INFO |    URL objetivo: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/
+2025-08-30 17:51:25 |     INFO |    Archivo salida: None
+2025-08-30 17:51:25 |     INFO |    Max pages (limitado): 1
+2025-08-30 17:51:25 |     INFO |    Resume from: 1
+2025-08-30 17:51:25 |     INFO |    Headless: True
+2025-08-30 17:51:25 |     INFO |    ⚡ Test mode: timeouts reducidos, límites bajos
+2025-08-30 17:51:25 |     INFO | 🚀 Iniciando scraping profesional de inmuebles24.com
+2025-08-30 17:51:25 |     INFO | ======================================================================
+2025-08-30 17:51:25 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 17:51:31 |     INFO | 📄 Procesando página 1: https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/
+2025-08-30 17:51:36 |     INFO | ✅ Página cargada correctamente - 27 propiedades detectadas
+2025-08-30 17:51:36 |     INFO | 🏠 Encontrados 27 property cards en la página
+2025-08-30 17:51:37 |     INFO | ✅ Extraídas 27 propiedades válidas
+2025-08-30 17:51:37 |     INFO | 📊 Progreso - Página: 1 | Propiedades: 27 | Total: 27 | Tiempo: 12.6s/página
+2025-08-30 17:51:37 |     INFO | ✅ Paginación detectada con selector: a[href*="pagina"]
+2025-08-30 17:51:39 |     INFO | 🏁 Límite de páginas alcanzado: 1
+2025-08-30 17:51:42 |     INFO | 💾 Resultados guardados en: C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\inm24\ven\ago25\2\I24_URLs_ago25_2.csv
+2025-08-30 17:51:42 |     INFO | ======================================================================
+2025-08-30 17:51:42 |     INFO | 🎉 SCRAPING COMPLETADO EXITOSAMENTE
+2025-08-30 17:51:42 |     INFO | 📊 Páginas procesadas: 1
+2025-08-30 17:51:42 |     INFO | 🏠 Propiedades encontradas: 27
+2025-08-30 17:51:42 |     INFO | ❌ Errores: 0
+2025-08-30 17:51:42 |     INFO | ⏱️  Tiempo total: 0:00:17.066617
+2025-08-30 17:51:42 |     INFO | ⚡ Promedio por página: 17.1s
+2025-08-30 17:51:42 |     INFO | ✅ Tasa de éxito: 100.0%
+2025-08-30 17:51:42 |     INFO | ======================================================================

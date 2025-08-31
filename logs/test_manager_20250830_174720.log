@@ -1,0 +1,2 @@
+2025-08-30 17:47:20,897 - INFO - Ejecutando test de mit: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\mit (prueba).py --url https://www.mitula.mx/casas/venta-distrito-federal --headless --pages 1
+2025-08-30 17:47:21,973 - ERROR - Test mit falló con código 1

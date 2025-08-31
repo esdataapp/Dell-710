@@ -1,0 +1,2 @@
+2025-08-30 17:42:55,370 - INFO - Ejecutando test de inm24: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\inm24 (prueba).py --url https://www.inmuebles24.com/inmuebles/en-venta/distrito-federal/ --headless --pages 1
+2025-08-30 17:43:13,786 - INFO - Test inm24 exitoso en 18.42s

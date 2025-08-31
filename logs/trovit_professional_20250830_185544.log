@@ -1,0 +1,53 @@
+2025-08-30 18:55:44 |     INFO | 🚀 Iniciando Trovit Professional Scraper
+2025-08-30 18:55:44 |     INFO |    URL objetivo: https://www.trovit.mx/casas-distrito-federal
+2025-08-30 18:55:44 |     INFO |    Archivo salida: None
+2025-08-30 18:55:44 |     INFO |    Max pages: 1
+2025-08-30 18:55:44 |     INFO |    Resume from: 1
+2025-08-30 18:55:44 |     INFO |    Headless: True
+2025-08-30 18:55:44 |     INFO | 🚀 Iniciando scraping profesional de trovit.com.mx
+2025-08-30 18:55:44 |     INFO | ======================================================================
+2025-08-30 18:55:44 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 18:55:50 |     INFO | 📄 Procesando página 1: https://www.trovit.mx/casas-distrito-federal
+2025-08-30 18:55:56 |    ERROR | ❌ Error en página 1: Message: unknown error: net::ERR_NAME_NOT_RESOLVED
+  (Session info: chrome=139.0.7258.155)
+Stacktrace:
+	GetHandleVerifier [0x0x7ff621db3d85+79397]
+	GetHandleVerifier [0x0x7ff621db3de0+79488]
+	(No symbol) [0x0x7ff621b5c0fa]
+	(No symbol) [0x0x7ff621b58ea0]
+	(No symbol) [0x0x7ff621b49cb9]
+	(No symbol) [0x0x7ff621b4ba71]
+	(No symbol) [0x0x7ff621b49fd6]
+	(No symbol) [0x0x7ff621b49a36]
+	(No symbol) [0x0x7ff621b496fa]
+	(No symbol) [0x0x7ff621b472cb]
+	(No symbol) [0x0x7ff621b47b4c]
+	(No symbol) [0x0x7ff621b600aa]
+	(No symbol) [0x0x7ff621c040ee]
+	(No symbol) [0x0x7ff621bdb19a]
+	(No symbol) [0x0x7ff621c03344]
+	(No symbol) [0x0x7ff621bdaf73]
+	(No symbol) [0x0x7ff621ba41b1]
+	(No symbol) [0x0x7ff621ba4f43]
+	GetHandleVerifier [0x0x7ff62207e1ed+3005069]
+	GetHandleVerifier [0x0x7ff62207831d+2980797]
+	GetHandleVerifier [0x0x7ff622097e0d+3110573]
+	GetHandleVerifier [0x0x7ff621dcd6de+184190]
+	GetHandleVerifier [0x0x7ff621dd516f+215567]
+	GetHandleVerifier [0x0x7ff621dbc974+115220]
+	GetHandleVerifier [0x0x7ff621dbcb29+115657]
+	GetHandleVerifier [0x0x7ff621da3268+11016]
+	BaseThreadInitThunk [0x0x7ff967c5e8d7+23]
+	RtlUserThreadStart [0x0x7ff9684dc34c+44]
+
+2025-08-30 18:56:01 |     INFO | 🏁 Límite de páginas alcanzado: 1
+2025-08-30 18:56:03 |  WARNING | ⚠️  No hay datos para guardar
+2025-08-30 18:56:03 |     INFO | ======================================================================
+2025-08-30 18:56:03 |     INFO | 🎉 SCRAPING COMPLETADO EXITOSAMENTE
+2025-08-30 18:56:03 |     INFO | 📊 Páginas procesadas: 0
+2025-08-30 18:56:03 |     INFO | 🏠 Propiedades encontradas: 0
+2025-08-30 18:56:03 |     INFO | ❌ Errores: 1
+2025-08-30 18:56:03 |     INFO | ⏱️  Tiempo total: 0:00:18.978436
+2025-08-30 18:56:03 |     INFO | ⚡ Promedio por página: 19.0s
+2025-08-30 18:56:03 |     INFO | ✅ Tasa de éxito: -100.0%
+2025-08-30 18:56:03 |     INFO | ======================================================================

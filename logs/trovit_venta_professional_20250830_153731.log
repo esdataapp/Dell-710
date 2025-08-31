@@ -1,0 +1,9 @@
+2025-08-30 15:37:31 |     INFO | 🚀 Iniciando Trovit Professional Scraper
+2025-08-30 15:37:31 |     INFO |    Operation: venta
+2025-08-30 15:37:31 |     INFO |    Max pages: 1
+2025-08-30 15:37:31 |     INFO |    Resume from: 1
+2025-08-30 15:37:31 |     INFO |    Headless: True
+2025-08-30 15:37:31 |     INFO | 🚀 Iniciando scraping profesional de trovit.com.mx
+2025-08-30 15:37:31 |     INFO | ======================================================================
+2025-08-30 15:37:31 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 15:37:31 |    ERROR | ❌ Error fatal en scraping: SB() got an unexpected keyword argument 'no_sandbox'

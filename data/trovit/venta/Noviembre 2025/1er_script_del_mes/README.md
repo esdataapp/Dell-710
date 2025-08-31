@@ -1,0 +1,17 @@
+# TROVIT - VENTA
+## Noviembre 2025 - 1Er Script Del Mes
+
+Esta carpeta contiene los archivos CSV generados por el scraper de trovit 
+para propiedades en venta durante la ejecución del 1er script del mes.
+
+### Archivos esperados:
+- `trovit_venta_noviembre_2025_1er_script_del_mes.csv`
+- `metadata_1er_script_del_mes.json`
+- `execution_log_1er_script_del_mes.log`
+
+### Información:
+- **Sitio web**: trovit
+- **Tipo**: venta
+- **Período**: Noviembre 2025
+- **Ejecución**: 1er_script_del_mes
+- **Generado**: 2025-08-29 15:13:49

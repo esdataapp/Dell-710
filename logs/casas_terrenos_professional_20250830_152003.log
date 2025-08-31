@@ -1,0 +1,10 @@
+2025-08-30 15:20:03 |     INFO | 🚀 Iniciando Casas y Terrenos Professional Scraper
+2025-08-30 15:20:03 |     INFO |    URL objetivo: https://www.casasyterrenos.com/buscar/venta/estado-distrito-federal
+2025-08-30 15:20:03 |     INFO |    Archivo salida: None
+2025-08-30 15:20:03 |     INFO |    Max pages: 1
+2025-08-30 15:20:03 |     INFO |    Resume from: 1
+2025-08-30 15:20:03 |     INFO |    Headless: True
+2025-08-30 15:20:03 |     INFO | 🚀 Iniciando scraping profesional de casasyterrenos.com
+2025-08-30 15:20:03 |     INFO | ======================================================================
+2025-08-30 15:20:03 |     INFO | 🔧 Creando driver profesional optimizado...
+2025-08-30 15:20:03 |    ERROR | ❌ Error fatal en scraping: SB() got an unexpected keyword argument 'no_sandbox'

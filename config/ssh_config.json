@@ -1,0 +1,78 @@
+{
+  "_comment": "SSH Configuration for Dell T710 - PropertyScraper",
+  "connection": {
+    "host": "192.168.50.54",
+    "port": 22,
+    "username": "scraper",
+    "key_file": "~/.ssh/dell_t710_key",
+    "password_file": null,
+    "timeout": 30,
+    "auth_timeout": 30,
+    "banner_timeout": 30,
+    "keepalive_interval": 30
+  },
+  
+  "remote_paths": {
+    "project_root": "/home/scraper/PropertyScraper-Dell710",
+    "python_executable": "/home/scraper/venv/bin/python",
+    "pip_executable": "/home/scraper/venv/bin/pip",
+    "logs_directory": "/home/scraper/PropertyScraper-Dell710/logs",
+    "data_directory": "/home/scraper/PropertyScraper-Dell710/data",
+    "config_directory": "/home/scraper/PropertyScraper-Dell710/config",
+    "temp_directory": "/tmp/propertyscraper"
+  },
+  
+  "deployment": {
+    "sync_exclude_patterns": [
+      "*.pyc",
+      "__pycache__",
+      ".git",
+      "*.log",
+      "checkpoints/*",
+      ".vscode",
+      ".idea",
+      "*.tmp"
+    ],
+    
+    "sync_include_patterns": [
+      "*.py",
+      "*.yaml",
+      "*.yml", 
+      "*.json",
+      "*.md",
+      "*.txt",
+      "*.sh"
+    ],
+    
+    "backup_before_sync": true,
+    "backup_directory": "/home/scraper/backups",
+    "compress_backups": true
+  },
+  
+  "execution": {
+    "default_timeout": 7200,
+    "command_timeout": 300,
+    "max_retries": 3,
+    "retry_delay": 30,
+    "nice_level": 10,
+    "ionice_class": 3
+  },
+  
+  "monitoring": {
+    "check_interval": 60,
+    "log_transfer": true,
+    "real_time_monitoring": false,
+    "resource_alerts": {
+      "cpu_threshold": 85,
+      "memory_threshold": 85,
+      "disk_threshold": 90
+    }
+  },
+  
+  "security": {
+    "strict_host_key_checking": false,
+    "compress": true,
+    "cipher": "aes128-ctr",
+    "max_sessions": 10
+  }
+}

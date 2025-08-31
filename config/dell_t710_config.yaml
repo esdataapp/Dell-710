@@ -1,0 +1,155 @@
+# Dell T710 Configuration - PropertyScraper
+# Configuración específica para Dell PowerEdge T710
+
+hardware:
+  server_model: "Dell PowerEdge T710"
+  cpu:
+    model: "Intel Xeon E5620"
+    cores: 8
+    threads: 8
+    base_frequency: "2.40GHz"
+    turbo_frequency: "2.67GHz"
+  memory:
+    total_gb: 24
+    type: "DDR3 ECC"
+    speed: "1333MHz"
+  storage:
+    type: "RAID0-10 HDDs"
+    estimated_iops: 200
+  network:
+    interface: "Gigabit Ethernet"
+    ip_address: "192.168.50.54"
+
+software:
+  os: "Ubuntu Server 24 LTS"
+  python_version: "3.12+"
+  chrome_version: "latest"
+  chromedriver: "auto-install"
+
+resource_limits:
+  max_cpu_usage_percent: 80    # 6.4 cores available
+  max_memory_usage_percent: 80  # 19.2 GB available
+  max_concurrent_scrapers: 4
+  max_concurrent_browsers: 4
+  
+scraping_optimization:
+  # Configuración optimizada para Dell T710
+  page_load_timeout: 30
+  implicit_wait: 10
+  between_page_delay: 2
+  between_scraper_delay: 5
+  checkpoint_interval: 50  # Guardar cada 50 páginas
+  
+  # Anti-detección optimizada
+  user_agents:
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+  
+  window_size: "1920,1080"
+  locale: "es-MX"
+  timezone: "America/Mexico_City"
+
+monitoring:
+  resource_check_interval: 30  # segundos
+  log_level: "INFO"
+  performance_alerts:
+    cpu_threshold: 85
+    memory_threshold: 85
+    disk_usage_threshold: 90
+  
+  metrics_retention_days: 30
+  log_retention_days: 90
+
+scheduling:
+  # Ejecución bi-mensual (cada 15 días)
+  bimonthly_schedule:
+    first_execution: 
+      day_of_month: [1, 2]
+      hour: 2  # 2:00 AM
+      minute: 0
+    second_execution:
+      day_of_month: [15, 16]
+      hour: 2  # 2:00 AM  
+      minute: 0
+  
+  execution_timeout_hours: 12  # Máximo 12 horas por ejecución
+  retry_attempts: 3
+  retry_delay_minutes: 30
+
+data_management:
+  output_format: "csv"
+  include_metadata: true
+  compress_old_data: true
+  compression_age_days: 30
+  
+  backup:
+    enabled: true
+    local_backup_path: "/home/scraper/PropertyScraper-Dell710/backups"
+    retention_months: 6
+
+ssh_deployment:
+  enabled: true
+  connection:
+    host: "192.168.50.54"
+    port: 22
+    username: "scraper"
+    key_file: "~/.ssh/dell_t710_key"
+    timeout: 30
+  
+  remote_paths:
+    project_root: "/home/scraper/PropertyScraper-Dell710"
+    python_env: "/home/scraper/venv/bin/python"
+    logs_path: "/home/scraper/PropertyScraper-Dell710/logs"
+    data_path: "/home/scraper/PropertyScraper-Dell710/data"
+  
+  sync_settings:
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__"
+      - ".git"
+      - "*.log"
+      - "checkpoints/*"
+    
+    include_patterns:
+      - "*.py"
+      - "*.yaml"
+      - "*.json"
+      - "*.md"
+      - "requirements.txt"
+
+error_handling:
+  max_consecutive_failures: 5
+  failure_cooldown_minutes: 10
+  
+  recovery_strategies:
+    network_error: "retry_with_delay"
+    cloudflare_block: "switch_user_agent"
+    memory_error: "reduce_concurrent_scrapers"
+    disk_full: "cleanup_old_logs"
+  
+  notification:
+    enabled: false  # Configurar si se necesita
+    methods: ["log", "file"]
+
+performance_tuning:
+  # Optimizaciones específicas para Dell T710
+  chrome_options:
+    - "--no-sandbox"
+    - "--disable-dev-shm-usage"
+    - "--disable-gpu"
+    - "--disable-features=VizDisplayCompositor"
+    - "--disable-extensions"
+    - "--disable-plugins"
+    - "--disable-background-timer-throttling"
+    - "--disable-backgrounding-occluded-windows"
+    - "--disable-renderer-backgrounding"
+    - "--memory-pressure-off"
+  
+  selenium_settings:
+    implicit_wait: 10
+    page_load_timeout: 30
+    script_timeout: 30
+  
+  system_optimization:
+    nice_level: 10  # Prioridad más baja para no interferir con sistema
+    ionice_class: 3  # Idle I/O priority

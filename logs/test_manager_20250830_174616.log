@@ -1,0 +1,2 @@
+2025-08-30 17:46:16,129 - INFO - Ejecutando test de inm24_det: python C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\scrapers (prueba)\inm24_det (prueba).py --urls-file C:\Users\criss\Desktop\TRABAJANDO\0. Scrapts\Scraps_Esdata\PropertyScraper-Dell710\data\test_urls_sample.txt --headless --properties 1
+2025-08-30 17:46:38,237 - INFO - Test inm24_det exitoso en 22.11s
