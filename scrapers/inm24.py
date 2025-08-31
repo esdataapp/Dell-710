@@ -609,19 +609,40 @@ def main():
     # Retornar código de salida apropiado
     sys.exit(0 if results['success'] else 1)
 
-def run_scraper(url: str, output_path: str, max_pages: int = None) -> Dict:
-    """
-    Función de interfaz para usar desde el orquestador
-    """
+from typing import Union
+
+
+def run_scraper(url_data: Union[str, Dict], output_path: str, max_pages: int = None) -> Dict:
+    """Función de interfaz para usar desde el orquestador."""
+    if isinstance(url_data, dict):
+        target = url_data
+    else:
+        target = {
+            'website': 'inmuebles24',
+            'city': '',
+            'operation': 'venta',
+            'product': '',
+            'url': url_data
+        }
+
     scraper = Inmuebles24ProfessionalScraper(
-        url=url,
+        url=target['url'],
         output_path=output_path,
         headless=True,
         max_pages=max_pages,
-        resume_from=1
+        resume_from=1,
+        operation_type=target.get('operation', 'venta')
     )
-    
-    return scraper.run()
+
+    result = scraper.run()
+    result.update({
+        'website': target.get('website'),
+        'city': target.get('city'),
+        'operation': target.get('operation'),
+        'product': target.get('product'),
+        'url': target.get('url'),
+    })
+    return result
 
 if __name__ == "__main__":
     main()

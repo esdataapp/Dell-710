@@ -186,12 +186,11 @@ class AdvancedOrchestrator:
             
             # Usar scrapers integrados
             website = scrap['website'].lower()
-            url = scrap['url']
             output_path = self.registry.get_output_path(
-                scrap['website'], 
-                scrap['state'], 
-                scrap['city'], 
-                scrap['operation'], 
+                scrap['website'],
+                scrap['state'],
+                scrap['city'],
+                scrap['operation'],
                 scrap['product']
             )
             
@@ -208,7 +207,7 @@ class AdvancedOrchestrator:
             # Ejecutar scraper en hilo separado
             scraper_thread = threading.Thread(
                 target=self.run_scraper_thread,
-                args=(website, url, output_path, scrap),
+                args=(scrap, output_path),
                 daemon=True
             )
             scraper_thread.start()
@@ -220,18 +219,19 @@ class AdvancedOrchestrator:
             self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
             return None
     
-    def run_scraper_thread(self, website: str, url: str, output_path: str, scrap: Dict):
+    def run_scraper_thread(self, scrap: Dict, output_path: str):
         """Ejecutar scraper en hilo separado"""
         try:
-            self.logger.info(f"🚀 Ejecutando scraper para {website}: {url}")
-            
+            website = scrap['website'].lower()
+            self.logger.info(f"🚀 Ejecutando scraper para {website}: {scrap['url']}")
+
             # Ejecutar scraper correspondiente
             if website == 'inmuebles24':
-                result = run_inmuebles24(url, output_path, max_pages=None)
+                result = run_inmuebles24(scrap, output_path, max_pages=None)
             elif website == 'casas_y_terrenos':
-                result = run_casas_terrenos(url, output_path, max_pages=None)
+                result = run_casas_terrenos(scrap, output_path, max_pages=None)
             elif website == 'mitula':
-                result = run_mitula(url, output_path, max_pages=None)
+                result = run_mitula(scrap, output_path, max_pages=None)
             else:
                 self.logger.error(f"❌ Scraper no disponible para {website}")
                 result = {'success': False, 'error': 'Scraper not available'}

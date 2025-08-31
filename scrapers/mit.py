@@ -15,7 +15,7 @@ import pickle
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 import argparse
 
 # Selenium imports
@@ -26,15 +26,23 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 # Utility function to load URLs from CSV
-def load_urls_from_csv(path: str) -> List[str]:
-    """Load target URLs from a CSV file returning the fifth column."""
-    urls: List[str] = []
+def load_urls_from_csv(path: str) -> List[Dict]:
+    """Load target URLs with metadata from a CSV file."""
+    urls: List[Dict] = []
     with open(path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader, None)  # skip header
+        reader = csv.DictReader(csvfile)
         for row in reader:
-            if len(row) > 4 and row[4]:
-                urls.append(row[4].strip())
+            url = row.get('URL') or row.get('Url') or row.get('url')
+            if url:
+                urls.append(
+                    {
+                        'website': row.get('PaginaWeb', '').strip(),
+                        'city': row.get('Ciudad', '').strip(),
+                        'operation': row.get('Operación', row.get('Operacion', '')).strip(),
+                        'product': row.get('ProductoPaginaWeb', '').strip(),
+                        'url': url.strip(),
+                    }
+                )
     return urls
 
 class MitulaProfessionalScraper:
@@ -736,9 +744,15 @@ def main():
     if args.gui:
         args.headless = False
 
-    urls: List[str]
+    urls: List[Dict]
     if args.url:
-        urls = [args.url]
+        urls = [{
+            'website': 'mitula',
+            'city': '',
+            'operation': args.operation,
+            'product': '',
+            'url': args.url
+        }]
     else:
         default_csv = Path(__file__).parent.parent / 'URLs' / 'mit_urls.csv'
         csv_path = args.urls_file or default_csv
@@ -747,40 +761,60 @@ def main():
     success = True
     for target in urls:
         scraper = MitulaProfessionalScraper(
-            url=target,
+            url=target['url'],
             output_path=args.output,
             headless=args.headless,
             max_pages=args.pages,
             resume_from=args.resume,
-            operation_type=args.operation
+            operation_type=target.get('operation', args.operation)
         )
         result = scraper.run()
         success = success and result.get('success', False)
 
     sys.exit(0 if success else 1)
 
-def run_scraper(url: str = None, output_path: str = None,
-                max_pages: int = None, urls_file: str = None) -> List[Dict]:
+def run_scraper(url_data: Union[str, Dict] = None, output_path: str = None,
+                max_pages: int = None, urls_file: str = None) -> Union[Dict, List[Dict]]:
     """Interface function used by orchestrator for multiple URLs."""
-    if url:
-        urls = [url]
+    if url_data:
+        if isinstance(url_data, dict):
+            urls = [url_data]
+        else:
+            urls = [{
+                'website': 'mitula',
+                'city': '',
+                'operation': 'venta',
+                'product': '',
+                'url': url_data
+            }]
+        single = True
     else:
         default_csv = Path(__file__).parent.parent / 'URLs' / 'mit_urls.csv'
         csv_path = urls_file or default_csv
         urls = load_urls_from_csv(csv_path)
+        single = False
 
     results: List[Dict] = []
     for target in urls:
         scraper = MitulaProfessionalScraper(
-            url=target,
+            url=target['url'],
             output_path=output_path,
             headless=True,
             max_pages=max_pages,
-            resume_from=1
+            resume_from=1,
+            operation_type=target.get('operation', 'venta')
         )
-        results.append(scraper.run())
+        result = scraper.run()
+        result.update({
+            'website': target.get('website'),
+            'city': target.get('city'),
+            'operation': target.get('operation'),
+            'product': target.get('product'),
+            'url': target.get('url'),
+        })
+        results.append(result)
 
-    return results
+    return results[0] if single else results
 
 if __name__ == "__main__":
     main()
