@@ -12,6 +12,7 @@ import time
 import threading
 import subprocess
 import logging
+import csv
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -20,6 +21,7 @@ import signal
 
 # Agregar paths del proyecto
 sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent / 'utils'))
 from enhanced_scraps_registry import EnhancedScrapsRegistry
 
 # Importar scrapers específicos
@@ -376,6 +378,116 @@ class AdvancedOrchestrator:
             
         except Exception as e:
             self.logger.error(f"❌ Error programando backup: {e}")
+
+    def load_tasks_from_urls_dir(self, urls_dir: Path = None) -> Dict[str, List[Dict]]:
+        """Inspeccionar la carpeta URLs/ y generar tareas agrupadas por sitio"""
+        if urls_dir is None:
+            urls_dir = Path(__file__).parent.parent / 'URLs'
+
+        tasks_by_site: Dict[str, List[Dict]] = {}
+
+        if not urls_dir.exists():
+            self.logger.warning(f"📁 Carpeta no encontrada: {urls_dir}")
+            return tasks_by_site
+
+        for csv_file in urls_dir.glob('*.csv'):
+            try:
+                with open(csv_file, 'r', encoding='utf-8-sig') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        website = (row.get('PaginaWeb') or '').strip()
+                        url = (row.get('URL') or '').strip()
+                        if not website or not url:
+                            continue
+
+                        task = {
+                            'website': website.lower(),
+                            'city': row.get('Ciudad', '').strip(),
+                            'operation': (row.get('Operación') or row.get('Operacion') or row.get('Operacin') or '').strip().lower(),
+                            'product': row.get('ProductoPaginaWeb', '').strip(),
+                            'url': url,
+                            'state': row.get('Estado', '').strip() or 'desconocido'
+                        }
+                        tasks_by_site.setdefault(task['website'], []).append(task)
+            except Exception as e:
+                self.logger.error(f"❌ Error leyendo {csv_file}: {e}")
+
+        return tasks_by_site
+
+    def build_output_path(self, task: Dict) -> str:
+        """Construir la ruta de salida para una tarea"""
+        safe_city = task['city'].lower().replace(' ', '_')
+        safe_product = task['product'].lower().replace(' ', '_')
+        operation = task['operation']
+        website = task['website']
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
+        output_dir = Path(__file__).parent.parent / 'data' / 'batch_csv' / website / safe_city / operation
+        output_dir.mkdir(parents=True, exist_ok=True)
+        return str(output_dir / f"{safe_product}_{timestamp}.csv")
+
+    def run_single_task(self, task: Dict):
+        """Ejecutar el scraper adecuado para una tarea"""
+        website = task['website']
+        url = task['url']
+        output_path = self.build_output_path(task)
+
+        try:
+            if website == 'inmuebles24':
+                run_inmuebles24(url, output_path, max_pages=None)
+            elif website == 'casas_y_terrenos':
+                run_casas_terrenos(url, output_path, max_pages=None)
+            elif website == 'mitula':
+                run_mitula(url, output_path, max_pages=None)
+            else:
+                self.logger.warning(f"⚠️ Scraper no disponible para {website}")
+        except Exception as e:
+            self.logger.error(f"❌ Error ejecutando tarea para {website}: {e}")
+
+    def process_batch_site(self, website: str, tasks: List[Dict]):
+        """Procesar secuencialmente todas las tareas de un sitio"""
+        self.logger.info(f"🌐 Procesando {len(tasks)} tareas para {website}")
+        for task in tasks:
+            if not self.running:
+                break
+            self.run_single_task(task)
+        self.logger.info(f"✅ Sitio completado: {website}")
+
+    def run_batch_from_csv(self):
+        """Ejecutar el flujo completo a partir de los CSVs en URLs/"""
+        tasks_by_site = self.load_tasks_from_urls_dir()
+        if not tasks_by_site:
+            self.logger.info("📝 No se encontraron tareas en URLs/")
+            return
+
+        self.running = True
+        websites = list(tasks_by_site.keys())
+        active_threads: Dict[str, threading.Thread] = {}
+
+        while self.running and (websites or active_threads):
+            # Lanzar nuevos sitios si hay capacidad
+            while websites and len(active_threads) < self.max_concurrent_websites:
+                website = websites.pop(0)
+                thread = threading.Thread(
+                    target=self.process_batch_site,
+                    args=(website, tasks_by_site[website]),
+                    daemon=True
+                )
+                thread.start()
+                active_threads[website] = thread
+
+            # Verificar sitios completados
+            for website in list(active_threads.keys()):
+                if not active_threads[website].is_alive():
+                    active_threads.pop(website)
+
+            if not active_threads and not websites:
+                break
+
+            time.sleep(5)
+
+        self.running = False
+        self.logger.info("✅ Proceso por lotes completado")
     
     def process_website_completely(self, website: str):
         """
@@ -592,6 +704,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Advanced Orchestrator for PropertyScraper Dell710')
     parser.add_argument('--resume', action='store_true', help='Resume from checkpoint')
     parser.add_argument('--status', action='store_true', help='Show current status')
+    parser.add_argument('--batch-from-csv', action='store_true', help='Ejecutar scraping en lote usando URLs/*.csv')
     
     args = parser.parse_args()
     
@@ -602,5 +715,7 @@ if __name__ == "__main__":
         orchestrator.display_progress()
     elif args.resume:
         orchestrator.resume_from_checkpoint()
+    elif args.batch_from_csv:
+        orchestrator.run_batch_from_csv()
     else:
         orchestrator.run_orchestration()
