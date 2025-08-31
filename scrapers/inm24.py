@@ -182,7 +182,7 @@ class Inmuebles24ProfessionalScraper:
             'last_page': page_num,
             'properties_count': len(self.properties_data),
             'timestamp': datetime.now().isoformat(),
-            'operation_type': self.target_url
+            'operation_type': self.operation_type
         }
         
         try:
@@ -541,7 +541,7 @@ class Inmuebles24ProfessionalScraper:
                 'avg_time_per_page': avg_time_per_page,
                 'success_rate': success_rate,
                 'csv_file': csv_path,
-                'operation_type': self.target_url
+                'operation_type': self.operation_type
             }
             
             # Log final
