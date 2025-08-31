@@ -254,13 +254,13 @@ class SSHLauncher:
             
             # Mapear website a script
             scraper_mapping = {
-                'inmuebles24': 'inmuebles24_professional.py',
-                'casas_y_terrenos': 'casas_y_terrenos_scraper.py',
-                'lamudi': 'lamudi_professional.py',
-                'mitula': 'mitula_scraper.py',
-                'propiedades': 'propiedades_professional.py',
-                'segundamano': 'segundamano_professional.py',
-                'trovit': 'trovit_professional.py'
+                'inmuebles24': 'inm24.py',
+                'casas_y_terrenos': 'cyt.py',
+                'lamudi': 'lam.py',
+                'mitula': 'mit.py',
+                'propiedades': 'prop.py',
+                'segundamano': 'seg.py',
+                'trovit': 'tro.py'
             }
             
             script_name = scraper_mapping.get(website)

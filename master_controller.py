@@ -339,7 +339,7 @@ class MasterController:
             system_info = system_result['stdout'] if system_result['success'] else 'Error getting system info'
             
             # Estado de scrapers activos
-            scrapers_cmd = "ps aux | grep -E '(inmuebles24|casas_y_terrenos|lamudi|mitula|propiedades|segundamano|trovit)_' | grep -v grep | wc -l"
+            scrapers_cmd = "ps aux | grep -E '(inm24|cyt|lam|mit|prop|seg|tro)\\.py' | grep -v grep | wc -l"
             scrapers_result = self.execute_remote_command(scrapers_cmd, timeout=10)
             active_scrapers = int(scrapers_result['stdout'].strip()) if scrapers_result['success'] else 0
             

@@ -60,16 +60,18 @@ class VisualTerminalMonitor:
                         cmdline = ' '.join(proc.info['cmdline']) if proc.info['cmdline'] else ''
                         
                         # Buscar scrapers conocidos en la línea de comandos
-                        scraper_names = [
-                            'inmuebles24_professional', 'casas_y_terrenos_scraper',
-                            'lamudi_professional', 'mitula_scraper',
-                            'propiedades_professional', 'segundamano_professional',
-                            'trovit_professional'
-                        ]
-                        
-                        for scraper_name in scraper_names:
-                            if scraper_name in cmdline:
-                                website = scraper_name.replace('_professional', '').replace('_scraper', '')
+                        scraper_names = {
+                            'inm24': 'inmuebles24',
+                            'cyt': 'casas_y_terrenos',
+                            'lam': 'lamudi',
+                            'mit': 'mitula',
+                            'prop': 'propiedades',
+                            'seg': 'segundamano',
+                            'tro': 'trovit'
+                        }
+
+                        for proc_name, website in scraper_names.items():
+                            if proc_name in cmdline:
                                 
                                 # Extraer operación de la línea de comandos
                                 operation = 'venta'  # default
@@ -367,10 +369,17 @@ class CompactMonitor:
                     if proc.info['name'] and 'python' in proc.info['name'].lower():
                         cmdline = ' '.join(proc.info['cmdline']) if proc.info['cmdline'] else ''
                         
-                        scraper_names = ['inmuebles24_professional', 'casas_y_terrenos_scraper', 'lamudi_professional']
-                        for scraper_name in scraper_names:
-                            if scraper_name in cmdline:
-                                website = scraper_name.replace('_professional', '').replace('_scraper', '')
+                        scraper_names = {
+                            'inm24': 'inmuebles24',
+                            'cyt': 'casas_y_terrenos',
+                            'lam': 'lamudi',
+                            'mit': 'mitula',
+                            'prop': 'propiedades',
+                            'seg': 'segundamano',
+                            'tro': 'trovit'
+                        }
+                        for proc_name, website in scraper_names.items():
+                            if proc_name in cmdline:
                                 active_scrapers[website] = proc.info['pid']
                                 break
                 except:

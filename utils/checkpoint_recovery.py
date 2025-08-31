@@ -119,18 +119,22 @@ class CheckpointRecoverySystem:
                         cmdline = ' '.join(proc.info['cmdline']) if proc.info['cmdline'] else ''
                         
                         # Buscar scrapers conocidos
-                        scraper_names = [
-                            'inmuebles24_professional', 'casas_y_terrenos_scraper',
-                            'lamudi_professional', 'mitula_scraper',
-                            'propiedades_professional', 'segundamano_professional',
-                            'trovit_professional', 'advanced_orchestrator'
-                        ]
-                        
-                        for scraper_name in scraper_names:
-                            if scraper_name in cmdline:
+                        scraper_names = {
+                            'inm24': 'inm24',
+                            'cyt': 'cyt',
+                            'lam': 'lam',
+                            'mit': 'mit',
+                            'prop': 'prop',
+                            'seg': 'seg',
+                            'tro': 'tro',
+                            'advanced_orchestrator': 'advanced_orchestrator'
+                        }
+
+                        for proc_name, script_name in scraper_names.items():
+                            if proc_name in cmdline:
                                 python_processes.append({
                                     'pid': proc.info['pid'],
-                                    'script': scraper_name,
+                                    'script': script_name,
                                     'cmdline': cmdline,
                                     'start_time': datetime.fromtimestamp(proc.info['create_time']).isoformat()
                                 })

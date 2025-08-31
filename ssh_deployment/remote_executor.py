@@ -325,7 +325,7 @@ class DellT710SSHExecutor:
             
             # Construir comando
             if scraper_name == 'inmuebles24':
-                script_path = f"{remote_root}/scrapers/inmuebles24_professional.py"
+                script_path = f"{remote_root}/scrapers/inm24.py"
                 
                 # Parámetros por defecto
                 params = parameters or {}
@@ -333,6 +333,15 @@ class DellT710SSHExecutor:
                 operation = params.get('operation', 'venta')
                 max_pages = params.get('max_pages', 100)
                 
+                command = f"cd {remote_root} && {python_env} {script_path} {headless_flag} --operation={operation} --pages={max_pages}"
+            elif scraper_name == 'casas_y_terrenos':
+                script_path = f"{remote_root}/scrapers/cyt.py"
+
+                params = parameters or {}
+                headless_flag = "--headless" if params.get('headless', True) else "--gui"
+                operation = params.get('operation', 'venta')
+                max_pages = params.get('max_pages', 100)
+
                 command = f"cd {remote_root} && {python_env} {script_path} {headless_flag} --operation={operation} --pages={max_pages}"
             else:
                 return {'success': False, 'error': f'Scraper no soportado: {scraper_name}'}
@@ -423,7 +432,7 @@ def main():
     parser = argparse.ArgumentParser(description='Dell T710 SSH Executor')
     parser.add_argument('--deploy', action='store_true', help='Desplegar proyecto')
     parser.add_argument('--status', action='store_true', help='Verificar estado remoto')
-    parser.add_argument('--test-scraper', choices=['inmuebles24'], help='Probar scraper específico')
+    parser.add_argument('--test-scraper', choices=['inmuebles24', 'casas_y_terrenos'], help='Probar scraper específico')
     parser.add_argument('--pages', type=int, default=5, help='Páginas para test')
     
     args = parser.parse_args()

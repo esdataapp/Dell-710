@@ -138,11 +138,11 @@ def test_single_scraper(website: str, url: str, output_dir: Path, max_pages: int
         
         # Importar y ejecutar scraper según el website
         if website.lower() == 'inmuebles24':
-            from scrapers.inmuebles24_professional import run_scraper
+            from scrapers.inm24 import run_scraper
         elif website.lower() == 'casas_y_terrenos':
-            from scrapers.casas_terrenos_professional import run_scraper
+            from scrapers.cyt import run_scraper
         elif website.lower() == 'mitula':
-            from scrapers.mitula_professional import run_scraper
+            from scrapers.mit import run_scraper
         else:
             logger.error(f"❌ Scraper no disponible para: {website}")
             return {'success': False, 'error': f'Scraper no disponible para {website}'}

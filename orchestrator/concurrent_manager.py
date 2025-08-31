@@ -21,8 +21,8 @@ import argparse
 # Import de scrapers
 sys.path.append(str(Path(__file__).parent.parent / 'scrapers'))
 sys.path.append(str(Path(__file__).parent.parent / 'utils'))
-from inmuebles24_professional import Inmuebles24ProfessionalScraper
-from casas_y_terrenos_scraper import CasasYTerrenosProfilessionalScraper
+from inm24 import Inmuebles24ProfessionalScraper
+from cyt import CasasTerrenosProfessionalScraper
 from gdrive_backup_manager import GoogleDriveBackupManager
 
 class DellT710ResourceMonitor:
@@ -182,9 +182,9 @@ class ConcurrentScraperManager:
                     max_pages=config.get('max_pages'),
                     operation_type=config.get('operation', 'venta')
                 )
-                
+
             elif config['site'] == 'casas_y_terrenos':
-                scraper = CasasYTerrenosProfilessionalScraper(
+                scraper = CasasTerrenosProfessionalScraper(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
                     operation_type=config.get('operation', 'venta')

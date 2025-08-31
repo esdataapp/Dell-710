@@ -43,7 +43,7 @@ def main():
     print("\n📄 Verificando archivos principales...")
     
     key_files = [
-        'scrapers/inmuebles24_professional.py',
+        'scrapers/inm24.py',
         'orchestrator/concurrent_manager.py',
         'orchestrator/bimonthly_scheduler.py',
         'ssh_deployment/remote_executor.py',
@@ -91,7 +91,7 @@ def main():
     print("   pip install -r requirements.txt")
     
     print("\n🧪 2. Probar scraper local (5 páginas):")
-    print("   python scrapers/inmuebles24_professional.py --headless --pages=5")
+    print("   python scrapers/inm24.py --headless --pages=5")
     
     print("\n🌐 3. Desplegar en Dell T710:")
     print("   python ssh_deployment/remote_executor.py --deploy")
