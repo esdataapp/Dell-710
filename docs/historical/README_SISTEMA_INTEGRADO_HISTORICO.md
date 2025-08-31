@@ -1,4 +1,6 @@
-# PropertyScraper Dell710 - Sistema Completamente Migrado
+# [HISTÓRICO] PropertyScraper Dell710 - Sistema Completamente Migrado
+
+> Documento archivado. La información relevante se consolidó en `README.md`.
 
 ## 🎯 Descripción General
 

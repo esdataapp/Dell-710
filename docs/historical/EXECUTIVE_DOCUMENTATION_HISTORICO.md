@@ -1,4 +1,6 @@
-# PropertyScraper-Dell710 - Executive Documentation
+# [HISTÓRICO] PropertyScraper-Dell710 - Executive Documentation
+
+> Documento archivado. La información relevante se consolidó en `README.md`.
 
 ## 🎯 Sistema Completo de Web Scraping Profesional
 
