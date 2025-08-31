@@ -13,6 +13,7 @@ import multiprocessing
 import queue
 import logging
 from datetime import datetime, timedelta
+from importlib import import_module
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import psutil
@@ -21,8 +22,23 @@ import argparse
 # Import de scrapers
 sys.path.append(str(Path(__file__).parent.parent / 'scrapers'))
 sys.path.append(str(Path(__file__).parent.parent / 'utils'))
-from inmuebles24_professional import Inmuebles24ProfessionalScraper
-from casas_y_terrenos_scraper import CasasYTerrenosProfilessionalScraper
+
+SCRAPER_MODULES = {
+    'cyt': ('cyt', 'CasasTerrenosProfessionalScraper'),
+    'inm24': ('inm24', 'Inmuebles24ProfessionalScraper'),
+    'inm24_det': ('inm24_det', 'Inmuebles24UnicoProfessionalScraper'),
+    'lam': ('lam', 'LamudiProfessionalScraper'),
+    'lam_det': ('lam_det', 'LamudiUnicoProfessionalScraper'),
+    'mit': ('mit', 'MitulaProfessionalScraper'),
+    'prop': ('prop', 'PropiedadesProfessionalScraper'),
+    'tro': ('tro', 'TrovitProfessionalScraper'),
+}
+
+SCRAPER_CLASSES = {}
+for site, (module_name, class_name) in SCRAPER_MODULES.items():
+    module = import_module(module_name)
+    SCRAPER_CLASSES[site] = getattr(module, class_name)
+
 from gdrive_backup_manager import GoogleDriveBackupManager
 
 class DellT710ResourceMonitor:
@@ -102,7 +118,7 @@ class ConcurrentScraperManager:
         self.resource_monitor = DellT710ResourceMonitor()
         
         # Configuración de concurrencia
-        self.max_concurrent = max_concurrent or self.resource_monitor.get_optimal_concurrent_scrapers()
+        self.max_concurrent = min(max_concurrent or self.resource_monitor.get_optimal_concurrent_scrapers(), 4)
         
         # Google Drive Backup Manager
         self.backup_manager = None
@@ -153,50 +169,44 @@ class ConcurrentScraperManager:
     
     def add_scraper_task(self, scraper_config: Dict):
         """Agregar tarea de scraping a la cola"""
-        task_id = f"{scraper_config['site']}_{scraper_config['operation']}_{datetime.now().strftime('%H%M%S')}"
-        
+        task_id = f"{scraper_config['site']}_{scraper_config.get('operation', 'na')}_{datetime.now().strftime('%H%M%S')}"
+
         task = {
             'id': task_id,
             'config': scraper_config,
             'added_at': datetime.now(),
-            'priority': scraper_config.get('priority', 1)
+            'priority': scraper_config.get('priority', 1),
+            'urls_file': scraper_config.get('urls_file'),
+            'url': scraper_config.get('url')
         }
-        
+
         self.scraper_queue.put(task)
         self.logger.info(f"➕ Tarea agregada: {task_id}")
-        
+
         return task_id
     
     def run_scraper_process(self, task: Dict) -> Dict:
         """Ejecutar un scraper en proceso separado"""
         task_id = task['id']
         config = task['config']
-        
+
         try:
             self.logger.info(f"🚀 Iniciando scraper: {task_id}")
-            
-            # Configurar scraper basado en el sitio
-            if config['site'] == 'inmuebles24':
-                scraper = Inmuebles24ProfessionalScraper(
-                    headless=config.get('headless', True),
-                    max_pages=config.get('max_pages'),
-                    operation_type=config.get('operation', 'venta')
-                )
-                
-            elif config['site'] == 'casas_y_terrenos':
-                scraper = CasasYTerrenosProfilessionalScraper(
-                    headless=config.get('headless', True),
-                    max_pages=config.get('max_pages'),
-                    operation_type=config.get('operation', 'venta')
-                )
-                
-            else:
-                raise ValueError(f"Sitio no soportado: {config['site']}")
-            
-            # Ejecutar scraper
+            site = config['site']
+            scraper_class = SCRAPER_CLASSES.get(site)
+            if not scraper_class:
+                raise ValueError(f"Sitio no soportado: {site}")
+
+            params = config.copy()
+            params.pop('site', None)
+            if 'operation' in params:
+                params['operation_type'] = params.pop('operation')
+
+            scraper = scraper_class(**params)
+
             result = scraper.run()
             result['task_id'] = task_id
-            result['site'] = config['site']
+            result['site'] = site
             
             # Iniciar respaldo en background si fue exitoso
             if result.get('success', False) and self.backup_manager:
@@ -276,36 +286,47 @@ class ConcurrentScraperManager:
                             self.logger.error(f"❌ Scraper falló: {scraper_id}")
                 
                 # Iniciar nuevos scrapers si hay espacio y recursos
-                while (len(self.active_scrapers) < self.max_concurrent and 
+                while (len(self.active_scrapers) < self.max_concurrent and
                        not self.scraper_queue.empty() and
                        self.resource_monitor.can_start_new_process()):
-                    
+
                     try:
-                        task = self.scraper_queue.get_nowait()
-                        
-                        # Crear thread para el scraper
+                        active_sites = {info['task']['config']['site'] for info in self.active_scrapers.values()}
+                        task = None
+                        skipped_tasks = []
+                        while not self.scraper_queue.empty():
+                            candidate = self.scraper_queue.get_nowait()
+                            if candidate['config']['site'] not in active_sites:
+                                task = candidate
+                                break
+                            skipped_tasks.append(candidate)
+
+                        for skipped in skipped_tasks:
+                            self.scraper_queue.put(skipped)
+
+                        if task is None:
+                            break
+
                         def run_with_result(task):
                             thread = threading.current_thread()
                             thread.result = self.run_scraper_process(task)
-                        
+
                         thread = threading.Thread(
                             target=run_with_result,
                             args=(task,),
                             name=f"Scraper-{task['id']}"
                         )
-                        
-                        # Iniciar thread
+
                         thread.start()
-                        
-                        # Registrar scraper activo
+
                         self.active_scrapers[task['id']] = {
                             'thread': thread,
                             'task': task,
                             'started_at': datetime.now()
                         }
-                        
+
                         self.logger.info(f"🟢 Scraper iniciado: {task['id']}")
-                        
+
                     except queue.Empty:
                         break
                     except Exception as e:
