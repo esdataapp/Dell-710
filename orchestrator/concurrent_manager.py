@@ -29,6 +29,9 @@ SCRAPER_MAP = {
     "lam": ("lam", "LamudiProfessionalScraper"),
     "lam_det": ("lam_det", "LamudiUnicoProfessionalScraper"),
     "cyt": ("cyt", "CasasTerrenosProfessionalScraper"),
+    "mit": ("mit", "MitulaProfessionalScraper"),
+    "prop": ("prop", "PropiedadesProfessionalScraper"),
+    "tro": ("tro", "TrovitProfessionalScraper"),
 }
 
 SCRAPER_CLASSES = {
@@ -231,6 +234,35 @@ class ConcurrentScraperManager:
                 scraper = scraper_cls(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
+                    operation_type=config.get('operation', 'venta')
+                )
+
+            elif site in ('mitula', 'mit'):
+                scraper_cls = SCRAPER_CLASSES['mit']
+                scraper = scraper_cls(
+                    url=config.get('url'),
+                    headless=config.get('headless', True),
+                    max_pages=config.get('max_pages'),
+                    resume_from=config.get('resume_from'),
+                    operation_type=config.get('operation', 'venta')
+                )
+
+            elif site in ('propiedades', 'prop'):
+                scraper_cls = SCRAPER_CLASSES['prop']
+                scraper = scraper_cls(
+                    headless=config.get('headless', True),
+                    max_pages=config.get('max_pages'),
+                    resume_from=config.get('resume_from'),
+                    operation_type=config.get('operation', 'venta')
+                )
+
+            elif site in ('trovit', 'tro'):
+                scraper_cls = SCRAPER_CLASSES['tro']
+                scraper = scraper_cls(
+                    url=config.get('url'),
+                    headless=config.get('headless', True),
+                    max_pages=config.get('max_pages'),
+                    resume_from=config.get('resume_from'),
                     operation_type=config.get('operation', 'venta')
                 )
 
