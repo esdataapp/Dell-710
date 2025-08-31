@@ -59,6 +59,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
+# Utility function to load URLs from CSV
+def load_urls_from_csv(path: str) -> List[str]:
+    """Load target URLs from a CSV file returning the fifth column."""
+    urls: List[str] = []
+    with open(path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader, None)
+        for row in reader:
+            if len(row) > 4 and row[4]:
+                urls.append(row[4].strip())
+    return urls
+
 class PropiedadesProfessionalScraper:
     """
     Scraper profesional para propiedades.com con capacidades de resilencia
@@ -617,35 +629,70 @@ class PropiedadesProfessionalScraper:
 def main():
     """Función principal con argumentos de línea de comandos"""
     parser = argparse.ArgumentParser(description='Propiedades Professional Scraper')
-    parser.add_argument('--headless', action='store_true', default=True, 
+    parser.add_argument('--url', type=str,
+                       help='URL única a procesar')
+    parser.add_argument('--urls-file', type=str,
+                       help='Archivo CSV con URLs a procesar')
+    parser.add_argument('--headless', action='store_true', default=True,
                        help='Ejecutar en modo headless (sin GUI)')
-    parser.add_argument('--pages', type=int, default=None, 
+    parser.add_argument('--pages', type=int, default=None,
                        help='Número máximo de páginas a procesar')
-    parser.add_argument('--resume', type=int, default=1, 
+    parser.add_argument('--resume', type=int, default=1,
                        help='Página desde la cual resumir')
     parser.add_argument('--operation', choices=['venta', 'renta'], default='venta',
                        help='Tipo de operación: venta o renta')
-    parser.add_argument('--gui', action='store_true', 
+    parser.add_argument('--gui', action='store_true',
                        help='Ejecutar con GUI (opuesto a --headless)')
-    
+
     args = parser.parse_args()
-    
-    # Ajustar headless basado en argumentos
+
     if args.gui:
         args.headless = False
-    
-    # Crear y ejecutar scraper
-    scraper = PropiedadesProfessionalScraper(
-        headless=args.headless,
-        max_pages=args.pages,
-        resume_from=args.resume,
-        operation_type=args.operation
-    )
-    
-    results = scraper.run()
-    
-    # Retornar código de salida apropiado
-    sys.exit(0 if results['success'] else 1)
+
+    if args.url:
+        urls = [args.url]
+    else:
+        default_csv = Path(__file__).parent.parent / 'URLs' / 'prop_urls.csv'
+        csv_path = args.urls_file or default_csv
+        urls = load_urls_from_csv(csv_path)
+
+    success = True
+    for target in urls:
+        scraper = PropiedadesProfessionalScraper(
+            headless=args.headless,
+            max_pages=args.pages,
+            resume_from=args.resume,
+            operation_type=args.operation
+        )
+        scraper.base_url = target
+        result = scraper.run()
+        success = success and result.get('success', False)
+
+    sys.exit(0 if success else 1)
+
+
+def run_scraper(url: str = None, max_pages: int = None,
+                urls_file: str = None) -> List[Dict]:
+    """Interface function for orchestrator to handle multiple URLs."""
+    if url:
+        urls = [url]
+    else:
+        default_csv = Path(__file__).parent.parent / 'URLs' / 'prop_urls.csv'
+        csv_path = urls_file or default_csv
+        urls = load_urls_from_csv(csv_path)
+
+    results: List[Dict] = []
+    for target in urls:
+        scraper = PropiedadesProfessionalScraper(
+            headless=True,
+            max_pages=max_pages,
+            resume_from=1,
+            operation_type='venta'
+        )
+        scraper.base_url = target
+        results.append(scraper.run())
+
+    return results
 
 if __name__ == "__main__":
     main()

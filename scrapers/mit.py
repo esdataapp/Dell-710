@@ -25,6 +25,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
+# Utility function to load URLs from CSV
+def load_urls_from_csv(path: str) -> List[str]:
+    """Load target URLs from a CSV file returning the fifth column."""
+    urls: List[str] = []
+    with open(path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader, None)  # skip header
+        for row in reader:
+            if len(row) > 4 and row[4]:
+                urls.append(row[4].strip())
+    return urls
+
 class MitulaProfessionalScraper:
     """
     Scraper profesional para mitula.mx con capacidades de resilencia
@@ -702,55 +714,73 @@ class MitulaProfessionalScraper:
 def main():
     """Función principal con argumentos de línea de comandos"""
     parser = argparse.ArgumentParser(description='Mitula Professional Scraper')
-    parser.add_argument('--url', type=str, required=True, 
-                       help='URL objetivo para hacer scraping')
-    parser.add_argument('--output', type=str, 
+    parser.add_argument('--url', type=str,
+                       help='URL única a procesar')
+    parser.add_argument('--urls-file', type=str,
+                       help='Archivo CSV con URLs a procesar')
+    parser.add_argument('--output', type=str,
                        help='Archivo de salida CSV')
-    parser.add_argument('--headless', action='store_true', default=True, 
+    parser.add_argument('--headless', action='store_true', default=True,
                        help='Ejecutar en modo headless (sin GUI)')
-    parser.add_argument('--pages', type=int, default=None, 
+    parser.add_argument('--pages', type=int, default=None,
                        help='Número máximo de páginas a procesar')
-    parser.add_argument('--resume', type=int, default=1, 
+    parser.add_argument('--resume', type=int, default=1,
                        help='Página desde la cual resumir')
     parser.add_argument('--operation', choices=['venta', 'renta'], default='venta',
                        help='Tipo de operación: venta o renta')
-    parser.add_argument('--gui', action='store_true', 
+    parser.add_argument('--gui', action='store_true',
                        help='Ejecutar con GUI (opuesto a --headless)')
     
     args = parser.parse_args()
     
-    # Ajustar headless basado en argumentos
     if args.gui:
         args.headless = False
-    
-    # Crear y ejecutar scraper
-    scraper = MitulaProfessionalScraper(
-        url=args.url,
-        output_path=args.output,
-        headless=args.headless,
-        max_pages=args.pages,
-        resume_from=args.resume,
-        operation_type=args.operation
-    )
-    
-    results = scraper.run()
-    
-    # Retornar código de salida apropiado
-    sys.exit(0 if results['success'] else 1)
 
-def run_scraper(url: str, output_path: str, max_pages: int = None) -> Dict:
-    """
-    Función de interfaz para usar desde el orquestador
-    """
-    scraper = MitulaProfessionalScraper(
-        url=url,
-        output_path=output_path,
-        headless=True,
-        max_pages=max_pages,
-        resume_from=1
-    )
-    
-    return scraper.run()
+    urls: List[str]
+    if args.url:
+        urls = [args.url]
+    else:
+        default_csv = Path(__file__).parent.parent / 'URLs' / 'mit_urls.csv'
+        csv_path = args.urls_file or default_csv
+        urls = load_urls_from_csv(csv_path)
+
+    success = True
+    for target in urls:
+        scraper = MitulaProfessionalScraper(
+            url=target,
+            output_path=args.output,
+            headless=args.headless,
+            max_pages=args.pages,
+            resume_from=args.resume,
+            operation_type=args.operation
+        )
+        result = scraper.run()
+        success = success and result.get('success', False)
+
+    sys.exit(0 if success else 1)
+
+def run_scraper(url: str = None, output_path: str = None,
+                max_pages: int = None, urls_file: str = None) -> List[Dict]:
+    """Interface function used by orchestrator for multiple URLs."""
+    if url:
+        urls = [url]
+    else:
+        default_csv = Path(__file__).parent.parent / 'URLs' / 'mit_urls.csv'
+        csv_path = urls_file or default_csv
+        urls = load_urls_from_csv(csv_path)
+
+    results: List[Dict] = []
+    for target in urls:
+        scraper = MitulaProfessionalScraper(
+            url=target,
+            output_path=output_path,
+            headless=True,
+            max_pages=max_pages,
+            resume_from=1
+        )
+        results.append(scraper.run())
+
+    return results
 
 if __name__ == "__main__":
     main()
