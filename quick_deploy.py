@@ -43,7 +43,7 @@ def main():
     print("\n📄 Verificando archivos principales...")
     
     key_files = [
-        'scrapers/inmuebles24_professional.py',
+        'scrapers/inm24.py',
         'orchestrator/concurrent_manager.py',
         'orchestrator/bimonthly_scheduler.py',
         'ssh_deployment/remote_executor.py',
@@ -73,13 +73,13 @@ def main():
         websites = list(data_dir.iterdir())
         print(f"✅ Estructura de datos creada: {len(websites)} sitios web")
         
-        # Verificar estructura de inmuebles24
-        inmuebles24_dir = data_dir / 'inmuebles24'
-        if inmuebles24_dir.exists():
-            operations = list(inmuebles24_dir.iterdir())
-            print(f"✅ inmuebles24: {len(operations)} tipos de operación")
+        # Verificar estructura de inm24
+        inm24_dir = data_dir / 'inm24'
+        if inm24_dir.exists():
+            operations = list(inm24_dir.iterdir())
+            print(f"✅ inm24: {len(operations)} tipos de operación")
         else:
-            print("❌ inmuebles24 directory missing")
+            print("❌ inm24 directory missing")
     else:
         print("❌ Estructura de datos no creada")
         print("Ejecute: python utils/create_data_structure.py")
@@ -91,7 +91,7 @@ def main():
     print("   pip install -r requirements.txt")
     
     print("\n🧪 2. Probar scraper local (5 páginas):")
-    print("   python scrapers/inmuebles24_professional.py --headless --pages=5")
+    print("   python scrapers/inm24.py --headless --pages=5")
     
     print("\n🌐 3. Desplegar en Dell T710:")
     print("   python ssh_deployment/remote_executor.py --deploy")
