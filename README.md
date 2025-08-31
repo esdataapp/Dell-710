@@ -22,6 +22,18 @@ Sistema profesional de web scraping diseñado específicamente para el servidor 
 - **Monitoring**: Real-time logging + progress tracking
 - **Data Format**: CSV + JSON metadata
 
+### Componentes Principales
+
+| Componente | Función |
+|------------|---------|
+| `master_controller.py` | Control central SSH desde Windows |
+| `auto_deploy_manager.py` | Despliegue automatizado del sistema |
+| `advanced_orchestrator.py` | Orquestación concurrente de scrapers |
+| `enhanced_scraps_registry.py` | Registro y seguimiento de ejecuciones |
+| `checkpoint_recovery.py` | Recuperación tras interrupciones |
+| `gdrive_backup_manager.py` | Backup automático a Google Drive |
+| `system_setup.py` | Verificación completa del entorno |
+
 ## 📁 Estructura del Proyecto
 
 ```
@@ -125,6 +137,23 @@ data/{scraper_abrev}/{operation_abrev}/{mesAño}/{script}/
 - **renta**: Renta general
 - **venta-d**: Venta desarrollos (solo Inmuebles24)
 - **venta-r**: Venta remates (solo Inmuebles24)
+
+### Lista de URLs.csv
+
+Archivo central en `config/Lista de URLs.csv` con las columnas:
+
+```csv
+PaginaWeb,Estado,Ciudad,Operacion,ProductoPaginaWeb,URL
+Inmuebles24,Jalisco,Zapopan,venta,Departamentos,https://...
+Casas_y_terrenos,Jalisco,Guadalajara,renta,Casas,https://...
+mitula,Jalisco,Zapopan,venta,Casa,https://...
+```
+
+Notas de nomenclatura:
+
+- `Operacion` sin tilde.
+- Operaciones en minúsculas: `venta`, `renta`, `venta-d`, `venta-r`.
+- `venta-d` y `venta-r` aplican solo para Inmuebles24 (desarrollos y remates).
 
 ### Ejemplo de Ruta Actualizada
 ```
