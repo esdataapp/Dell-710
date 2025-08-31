@@ -53,19 +53,13 @@ def test_enhanced_registry():
         # Test obtener próximos scraps
         next_scraps = registry.get_next_scraps_to_run(10)
         logger.info(f"⏭️ Próximos scraps: {len(next_scraps)}")
-        
+
         if next_scraps:
             sample_scrap = next_scraps[0]
             logger.info(f"🎯 Ejemplo scrap: {sample_scrap['website']} - {sample_scrap['url']}")
-            
+
             # Test ruta de salida
-            output_path = registry.get_output_path(
-                sample_scrap['website'],
-                sample_scrap['state'],
-                sample_scrap['city'],
-                sample_scrap['operation'],
-                sample_scrap['product']
-            )
+            output_path = registry.get_output_path(sample_scrap)
             logger.info(f"📁 Ruta salida: {output_path}")
         
         logger.info("✅ EnhancedScrapsRegistry test exitoso")
@@ -162,7 +156,7 @@ def test_csv_structure():
     logger.info("🧪 Testing estructura Lista de URLs.csv...")
     
     try:
-        csv_path = Path('Lista de URLs.csv')
+        csv_path = Path('config') / 'Lista de URLs.csv'
         if not csv_path.exists():
             logger.error("❌ Lista de URLs.csv no encontrada")
             return False
