@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
 
+from url_utils import extract_url_column
+
 class EnhancedScrapsRegistry:
     """
     Gestor del registro completo de scraps con seguimiento de estado
@@ -55,8 +57,10 @@ class EnhancedScrapsRegistry:
         
         try:
             with open(self.csv_urls_file, 'r', encoding='utf-8-sig') as f:
-                reader = csv.DictReader(f)
-                
+                reader = csv.DictReader(
+                    row for row in f if not row.lstrip().startswith('#')
+                )
+
                 for idx, row in enumerate(reader, 1):
                     # Normalizar nombres de columnas
                     pagina_web = row.get('PaginaWeb', '').strip()
@@ -64,8 +68,8 @@ class EnhancedScrapsRegistry:
                     ciudad = row.get('Ciudad', '').strip()
                     operacion = row.get('Operación', row.get('Operacion', '')).strip()
                     producto = row.get('ProductoPaginaWeb', '').strip()
-                    url = row.get('URL', '').strip()
-                    
+                    url = extract_url_column(row)
+
                     if url and pagina_web:
                         # Crear ID único para cada URL
                         url_id = f"{pagina_web.lower()}_{estado.lower()}_{ciudad.lower().replace(' ', '_')}_{operacion.lower()}_{producto.lower().replace(' ', '_')}"

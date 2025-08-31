@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
 
+from url_utils import extract_url_column
+
 class ScrapsRegistry:
     """
     Gestor del registro completo de scraps con seguimiento de estado
@@ -44,7 +46,7 @@ class ScrapsRegistry:
         self.urls_registry = self.load_urls_from_csv()
         
         # URLs específicas para Inmuebles24 según tu lista (legacy support)
-        self.inmuebles24_products = {}
+        self.inmuebles24_products = {
             9: "https://www.inmuebles24.com/desarrollo-horizontal-en-venta-en-jalisco.html",
             10: "https://www.inmuebles24.com/desarrollo-horizontal-vertical-en-venta-en-jalisco.html",
             11: "https://www.inmuebles24.com/desarrollo-vertical-en-venta-en-jalisco.html",
@@ -58,11 +60,11 @@ class ScrapsRegistry:
             19: "https://www.inmuebles24.com/quinta-en-venta-en-jalisco.html",
             20: "https://www.inmuebles24.com/terreno-comercial-en-venta-en-jalisco.html",
             21: "https://www.inmuebles24.com/terreno-industrial-en-venta-en-jalisco.html",
-            22: "https://www.inmuebles24.com/villa-en-venta-en-jalisco.html"
+            22: "https://www.inmuebles24.com/villa-en-venta-en-jalisco.html",
         }
         
         self.initialize_registry()
-    
+
     def setup_logging(self):
         """Configurar logging para el registry"""
         self.logger = logging.getLogger('ScrapsRegistry')
@@ -79,6 +81,61 @@ class ScrapsRegistry:
             self.create_complete_registry()
         else:
             self.logger.info("📋 Registry existente encontrado")
+
+    def load_urls_from_csv(self) -> List[Dict]:
+        """Cargar todas las URLs desde el archivo CSV principal"""
+        urls_list: List[Dict] = []
+
+        if not self.csv_urls_file.exists():
+            self.logger.warning(f"Archivo CSV no encontrado: {self.csv_urls_file}")
+            return urls_list
+
+        try:
+            with open(self.csv_urls_file, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(
+                    row for row in f if not row.lstrip().startswith('#')
+                )
+
+                for idx, row in enumerate(reader, 1):
+                    pagina_web = row.get('PaginaWeb', '').strip()
+                    estado = row.get('Estado', '').strip()
+                    ciudad = row.get('Ciudad', '').strip()
+                    operacion = row.get('Operación', row.get('Operacion', '')).strip()
+                    producto = row.get('ProductoPaginaWeb', '').strip()
+                    url = extract_url_column(row)
+
+                    if url and pagina_web:
+                        url_id = f"{pagina_web.lower()}_{estado.lower()}_{ciudad.lower().replace(' ', '_')}_{operacion.lower()}_{producto.lower().replace(' ', '_')}"
+                        url_id = (
+                            url_id.replace('/', '_')
+                            .replace('-', '_')
+                            .replace('ñ', 'n')
+                            .replace('é', 'e')
+                            .replace('í', 'i')
+                            .replace('ó', 'o')
+                            .replace('ú', 'u')
+                        )
+
+                        urls_list.append(
+                            {
+                                'id': url_id,
+                                'website': pagina_web,
+                                'estado': estado,
+                                'ciudad': ciudad,
+                                'operacion': operacion,
+                                'producto': producto,
+                                'url': url,
+                                'csv_row': idx,
+                            }
+                        )
+
+            self.logger.info(
+                f"Cargadas {len(urls_list)} URLs desde {self.csv_urls_file}"
+            )
+        except Exception as e:
+            self.logger.error(f"Error cargando URLs desde CSV: {e}")
+
+        return urls_list
     
     def create_complete_registry(self):
         """Crear el registro completo de todos los scraps posibles"""

@@ -218,6 +218,10 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
 - **SeleniumBase**: Configuración estandarizada y compatible
 - **Estructura de datos**: Optimizada con abreviaciones
 - **Lista de URLs.csv**: Configuración centralizada con jerarquía
+- **URLs/*_urls.csv**: Archivos de entrada para cada scraper. Comienzan con una
+  línea de comentario describiendo el formato
+  `PaginaWeb,Ciudad,Operación,ProductoPaginaWeb,URL`. El encabezado `URL` es
+  tolerante a mayúsculas/minúsculas (`URL`, `Url`, `url`).
 
 ---
 
