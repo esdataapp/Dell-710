@@ -1,0 +1,4 @@
+downloaded_files/
+*.lock
+.DS_Store
+__MACOSX/
