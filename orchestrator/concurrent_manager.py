@@ -21,8 +21,11 @@ import argparse
 # Import de scrapers
 sys.path.append(str(Path(__file__).parent.parent / 'scrapers'))
 sys.path.append(str(Path(__file__).parent.parent / 'utils'))
-from inmuebles24_professional import Inmuebles24ProfessionalScraper
-from casas_y_terrenos_scraper import CasasYTerrenosProfilessionalScraper
+from inm24 import Inmuebles24ProfessionalScraper
+from inm24_det import Inmuebles24UnicoProfessionalScraper
+from lam import LamudiProfessionalScraper
+from lam_det import LamudiUnicoProfessionalScraper
+from cyt import CasasTerrenosProfessionalScraper
 from gdrive_backup_manager import GoogleDriveBackupManager
 
 class DellT710ResourceMonitor:
@@ -117,6 +120,7 @@ class ConcurrentScraperManager:
         self.completed_scrapers = {}
         self.failed_scrapers = {}
         self.scraper_queue = queue.Queue()
+        self.task_dependencies = {}
         
         # Threading
         self.manager_thread = None
@@ -174,29 +178,56 @@ class ConcurrentScraperManager:
         
         try:
             self.logger.info(f"🚀 Iniciando scraper: {task_id}")
-            
+            site = config['site']
+
             # Configurar scraper basado en el sitio
-            if config['site'] == 'inmuebles24':
+            if site in ('inmuebles24', 'inm24'):
                 scraper = Inmuebles24ProfessionalScraper(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
                     operation_type=config.get('operation', 'venta')
                 )
-                
-            elif config['site'] == 'casas_y_terrenos':
-                scraper = CasasYTerrenosProfilessionalScraper(
+
+            elif site in ('inmuebles24_det', 'inm24_det'):
+                scraper = Inmuebles24UnicoProfessionalScraper(
+                    urls_file=config.get('urls_file'),
+                    headless=config.get('headless', True),
+                    max_properties=config.get('max_properties'),
+                    operation_type=config.get('operation', 'venta')
+                )
+
+            elif site in ('lamudi', 'lam'):
+                scraper = LamudiProfessionalScraper(
+                    headless=config.get('headless', True),
+                    max_pages=config.get('max_pages'),
+                    resume_from=config.get('resume_from'),
+                    operation_type=config.get('operation', 'venta')
+                )
+
+            elif site in ('lamudi_det', 'lam_det'):
+                scraper = LamudiUnicoProfessionalScraper(
+                    urls_file=config.get('urls_file'),
+                    headless=config.get('headless', True),
+                    max_properties=config.get('max_properties'),
+                    operation_type=config.get('operation', 'venta')
+                )
+
+            elif site in ('casas_y_terrenos', 'cyt'):
+                scraper = CasasTerrenosProfessionalScraper(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
                     operation_type=config.get('operation', 'venta')
                 )
-                
+
             else:
-                raise ValueError(f"Sitio no soportado: {config['site']}")
-            
+                raise ValueError(f"Sitio no soportado: {site}")
+
             # Ejecutar scraper
             result = scraper.run()
             result['task_id'] = task_id
-            result['site'] = config['site']
+            result['site'] = site
+            if result.get('csv_file'):
+                self.logger.info(f"📄 CSV generado por {task_id}: {result['csv_file']}")
             
             # Iniciar respaldo en background si fue exitoso
             if result.get('success', False) and self.backup_manager:
@@ -271,6 +302,26 @@ class ConcurrentScraperManager:
                         if result.get('success', False):
                             self.completed_scrapers[scraper_id] = result
                             self.logger.info(f"✅ Scraper completado: {scraper_id}")
+
+                            # Programar scraper dependiente si aplica
+                            csv_file = result.get('csv_file')
+                            site = thread_info['task']['config']['site']
+                            if csv_file and site in ('inmuebles24', 'inm24', 'lamudi', 'lam'):
+                                detail_site = 'inm24_det' if site in ('inmuebles24', 'inm24') else 'lam_det'
+                                detail_config = {
+                                    'site': detail_site,
+                                    'operation': thread_info['task']['config'].get('operation'),
+                                    'urls_file': csv_file,
+                                    'headless': thread_info['task']['config'].get('headless', True),
+                                    'priority': thread_info['task']['config'].get('priority', 1)
+                                }
+                                new_task_id = self.add_scraper_task(detail_config)
+                                self.task_dependencies[new_task_id] = {
+                                    'depends_on': scraper_id,
+                                    'csv_file': csv_file
+                                }
+                                self.logger.info(
+                                    f"🔁 Scraper dependiente programado: {new_task_id} -> {scraper_id} ({csv_file})")
                         else:
                             self.failed_scrapers[scraper_id] = result
                             self.logger.error(f"❌ Scraper falló: {scraper_id}")
