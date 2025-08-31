@@ -10,6 +10,7 @@ import json
 import time
 import pickle
 import logging
+import csv
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -17,7 +18,7 @@ import argparse
 
 # Agregar paths del proyecto
 sys.path.append(str(Path(__file__).parent.parent))
-from utils.scraps_registry import ScrapsRegistry
+from utils.enhanced_scraps_registry import EnhancedScrapsRegistry
 
 class CheckpointRecoverySystem:
     """
@@ -32,7 +33,7 @@ class CheckpointRecoverySystem:
         self.setup_logging()
         
         # Componentes
-        self.registry = ScrapsRegistry()
+        self.registry = EnhancedScrapsRegistry()
         
         # Directorios de checkpoint
         self.project_root = Path(__file__).parent.parent
@@ -73,6 +74,48 @@ class CheckpointRecoverySystem:
         )
         
         self.logger = logging.getLogger(__name__)
+
+    def load_registry_data(self) -> List[Dict]:
+        """Cargar datos completos del registry"""
+        try:
+            if not self.registry.registry_file.exists():
+                return []
+            with open(self.registry.registry_file, 'r', encoding='utf-8') as f:
+                return list(csv.DictReader(f))
+        except Exception as e:
+            self.logger.error(f"❌ Error cargando registry: {e}")
+            return []
+
+    def reset_scrap_status(self, scrap_id: str) -> bool:
+        """Restablecer estado de un scrap a 'Pendiente'"""
+        try:
+            if not self.registry.registry_file.exists():
+                return False
+
+            rows = []
+            updated = False
+            with open(self.registry.registry_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                fieldnames = reader.fieldnames
+                for row in reader:
+                    if row['id'] == scrap_id:
+                        row['ultimo_estado'] = 'Pendiente'
+                        row['ultima_ejecucion'] = ''
+                        row['proxima_ejecucion'] = ''
+                        updated = True
+                    rows.append(row)
+
+            if updated:
+                with open(self.registry.registry_file, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(rows)
+
+            return updated
+
+        except Exception as e:
+            self.logger.error(f"❌ Error restableciendo scrap {scrap_id}: {e}")
+            return False
     
     def create_system_checkpoint(self, orchestrator_state: Dict = None, active_scrapers: List[Dict] = None) -> bool:
         """Crear checkpoint completo del sistema"""
@@ -244,21 +287,21 @@ class CheckpointRecoverySystem:
                 interrupted = True
                 reasons.append(f"Missing processes: {len(missing_processes)}")
             
-            # Verificar scraps pausados en registry
-            scraps = self.registry.load_scraps_from_csv()
-            paused_scraps = [s for s in scraps if s['status'] == 'paused']
-            
-            if paused_scraps:
+            # Verificar scraps en progreso en registry
+            scraps = self.load_registry_data()
+            in_progress = [s for s in scraps if s.get('ultimo_estado', '').lower() == 'en_progreso']
+
+            if in_progress:
                 interrupted = True
-                reasons.append(f"Paused scraps found: {len(paused_scraps)}")
-            
+                reasons.append(f"Scraps in progress: {len(in_progress)}")
+
             return {
                 'interrupted': interrupted,
                 'reasons': reasons,
                 'last_checkpoint': last_checkpoint,
                 'time_since_checkpoint': str(time_since_checkpoint),
                 'missing_processes': missing_processes,
-                'paused_scraps': len(paused_scraps)
+                'in_progress_scraps': len(in_progress)
             }
             
         except Exception as e:
@@ -430,20 +473,21 @@ class CheckpointRecoverySystem:
             # 2. Crear reporte
             report_file = self.create_recovery_report(interruption_data)
             
-            # 3. Recuperar scraps pausados
-            scraps = self.registry.load_scraps_from_csv()
-            paused_scraps = [s for s in scraps if s['status'] == 'paused']
-            
+            # 3. Recuperar scraps en progreso
+            scraps = self.load_registry_data()
+            in_progress = [s for s in scraps if s.get('ultimo_estado', '').lower() == 'en_progreso']
+
             recovery_count = 0
-            for scrap in paused_scraps:
+            for scrap in in_progress:
                 try:
-                    # Cambiar estado a pending para que sean procesados
-                    self.registry.update_scrap_status(scrap['scrap_id'], 'pending')
-                    recovery_count += 1
-                    self.logger.info(f"🔄 Scraper recuperado: {scrap['website']} ({scrap['operation']})")
+                    if self.reset_scrap_status(scrap['id']):
+                        recovery_count += 1
+                        self.logger.info(
+                            f"🔄 Scraper recuperado: {scrap['website']} ({scrap['operacion']})"
+                        )
                 except Exception as e:
-                    self.logger.error(f"❌ Error recuperando scrap {scrap['scrap_id']}: {e}")
-            
+                    self.logger.error(f"❌ Error recuperando scrap {scrap.get('id')}: {e}")
+
             if recovery_count > 0:
                 self.logger.info(f"✅ {recovery_count} scrapers marcados para recuperación")
             

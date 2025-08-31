@@ -17,7 +17,7 @@ import psutil
 
 # Agregar paths del proyecto
 sys.path.append(str(Path(__file__).parent.parent))
-from utils.scraps_registry import ScrapsRegistry
+from utils.enhanced_scraps_registry import EnhancedScrapsRegistry
 from monitoring.performance_monitor import DellT710PerformanceMonitor
 
 class VisualTerminalMonitor:
@@ -31,7 +31,7 @@ class VisualTerminalMonitor:
     """
     
     def __init__(self):
-        self.registry = ScrapsRegistry()
+        self.registry = EnhancedScrapsRegistry()
         self.performance_monitor = DellT710PerformanceMonitor(log_interval=10)
         
         # Estado del monitor
@@ -198,22 +198,23 @@ class VisualTerminalMonitor:
         return scraper_lines
     
     def format_registry_stats(self) -> List[str]:
-        """Formatear estadísticas del registry"""
+        """Formatear estadísticas del registry usando EnhancedScrapsRegistry"""
         try:
             stats = self.registry.get_registry_stats()
-            
+            pending = len(self.registry.get_pending_scraps())
+
             registry_lines = [
                 "📋 SCRAPS REGISTRY",
                 f"├─ Total:     {stats['total_scraps']:3d}",
-                f"├─ Pending:   {stats['pending']:3d}",
-                f"├─ Running:   {stats['running']:3d}",
-                f"├─ Completed: {stats['completed']:3d}",
-                f"├─ Failed:    {stats['failed']:3d}",
-                f"└─ Properties: {stats['total_properties_scraped']:,}"
+                f"├─ Activos:   {stats['scraps_activos']:3d}",
+                f"├─ Pendientes: {pending:3d}",
+                f"├─ Exitosos:  {stats['ejecuciones_exitosas']:3d}",
+                f"├─ Fallidos:  {stats['ejecuciones_fallidas']:3d}",
+                f"└─ Promedio Registros: {stats['promedio_registros']}"
             ]
-            
+
             return registry_lines
-            
+
         except Exception as e:
             return ["📋 SCRAPS REGISTRY", f"   Error: {e}"]
     
@@ -355,7 +356,7 @@ class CompactMonitor:
     """Monitor compacto para ver estado rápido"""
     
     def __init__(self):
-        self.registry = ScrapsRegistry()
+        self.registry = EnhancedScrapsRegistry()
     
     def show_status(self):
         """Mostrar estado compacto"""
@@ -378,14 +379,17 @@ class CompactMonitor:
             
             # Stats registry
             stats = self.registry.get_registry_stats()
-            
+            pending = len(self.registry.get_pending_scraps())
+
             # Sistema
             cpu = psutil.cpu_percent()
             memory = psutil.virtual_memory().percent
-            
+
             # Output compacto
-            print(f"🚀 Dell710: CPU:{cpu:4.1f}% MEM:{memory:4.1f}% | Active:{len(active_scrapers)} | Pending:{stats['pending']} Completed:{stats['completed']}")
-            
+            print(
+                f"🚀 Dell710: CPU:{cpu:4.1f}% MEM:{memory:4.1f}% | Active:{len(active_scrapers)} | Pending:{pending} | Success:{stats['ejecuciones_exitosas']}"
+            )
+
             if active_scrapers:
                 websites = ', '.join(active_scrapers.keys())
                 print(f"   Running: {websites}")
