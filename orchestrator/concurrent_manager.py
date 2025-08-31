@@ -17,15 +17,25 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import psutil
 import argparse
+import importlib
 
 # Import de scrapers
 sys.path.append(str(Path(__file__).parent.parent / 'scrapers'))
 sys.path.append(str(Path(__file__).parent.parent / 'utils'))
-from inm24 import Inmuebles24ProfessionalScraper
-from inm24_det import Inmuebles24UnicoProfessionalScraper
-from lam import LamudiProfessionalScraper
-from lam_det import LamudiUnicoProfessionalScraper
-from cyt import CasasTerrenosProfessionalScraper
+
+SCRAPER_MAP = {
+    "inm24": ("inm24", "Inmuebles24ProfessionalScraper"),
+    "inm24_det": ("inm24_det", "Inmuebles24UnicoProfessionalScraper"),
+    "lam": ("lam", "LamudiProfessionalScraper"),
+    "lam_det": ("lam_det", "LamudiUnicoProfessionalScraper"),
+    "cyt": ("cyt", "CasasTerrenosProfessionalScraper"),
+}
+
+SCRAPER_CLASSES = {
+    key: getattr(importlib.import_module(mod), cls)
+    for key, (mod, cls) in SCRAPER_MAP.items()
+}
+
 from gdrive_backup_manager import GoogleDriveBackupManager
 
 class DellT710ResourceMonitor:
@@ -182,14 +192,16 @@ class ConcurrentScraperManager:
 
             # Configurar scraper basado en el sitio
             if site in ('inmuebles24', 'inm24'):
-                scraper = Inmuebles24ProfessionalScraper(
+                scraper_cls = SCRAPER_CLASSES['inm24']
+                scraper = scraper_cls(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
                     operation_type=config.get('operation', 'venta')
                 )
 
             elif site in ('inmuebles24_det', 'inm24_det'):
-                scraper = Inmuebles24UnicoProfessionalScraper(
+                scraper_cls = SCRAPER_CLASSES['inm24_det']
+                scraper = scraper_cls(
                     urls_file=config.get('urls_file'),
                     headless=config.get('headless', True),
                     max_properties=config.get('max_properties'),
@@ -197,7 +209,8 @@ class ConcurrentScraperManager:
                 )
 
             elif site in ('lamudi', 'lam'):
-                scraper = LamudiProfessionalScraper(
+                scraper_cls = SCRAPER_CLASSES['lam']
+                scraper = scraper_cls(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
                     resume_from=config.get('resume_from'),
@@ -205,7 +218,8 @@ class ConcurrentScraperManager:
                 )
 
             elif site in ('lamudi_det', 'lam_det'):
-                scraper = LamudiUnicoProfessionalScraper(
+                scraper_cls = SCRAPER_CLASSES['lam_det']
+                scraper = scraper_cls(
                     urls_file=config.get('urls_file'),
                     headless=config.get('headless', True),
                     max_properties=config.get('max_properties'),
@@ -213,7 +227,8 @@ class ConcurrentScraperManager:
                 )
 
             elif site in ('casas_y_terrenos', 'cyt'):
-                scraper = CasasTerrenosProfessionalScraper(
+                scraper_cls = SCRAPER_CLASSES['cyt']
+                scraper = scraper_cls(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
                     operation_type=config.get('operation', 'venta')
