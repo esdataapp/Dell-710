@@ -112,15 +112,15 @@ def initialize_registry():
     logger.info("🗂️ Inicializando registry...")
     
     try:
-        # Verificar que el archivo enhanced_scraps_registry.py existe
-        registry_file = Path('enhanced_scraps_registry.py')
+        # Verificar que el archivo utils/enhanced_scraps_registry.py existe
+        registry_file = Path('utils') / 'enhanced_scraps_registry.py'
         if not registry_file.exists():
-            logger.error("❌ enhanced_scraps_registry.py no encontrado")
+            logger.error("❌ utils/enhanced_scraps_registry.py no encontrado")
             return False
-        
-        # Importar y usar el registry
-        sys.path.append(str(Path('.').absolute()))
-        from enhanced_scraps_registry import EnhancedScrapsRegistry
+
+        # Importar y usar el registry desde utils/
+        sys.path.append(str(Path('utils').resolve()))
+        from utils.enhanced_scraps_registry import EnhancedScrapsRegistry
         
         registry = EnhancedScrapsRegistry()
         
@@ -131,9 +131,9 @@ def initialize_registry():
         
         # Obtener estadísticas
         stats = registry.get_registry_stats()
-        logger.info(f"📊 Registry inicializado:")
-        logger.info(f"   Pendientes: {stats['pending']}")
-        logger.info(f"   Total scraps: {stats['total_scraps']}")
+        logger.info("📊 Registry inicializado:")
+        logger.info(f"   Scraps activos: {stats.get('scraps_activos', 'N/A')}")
+        logger.info(f"   Total scraps: {stats.get('total_scraps', 'N/A')}")
         
         return True
         
