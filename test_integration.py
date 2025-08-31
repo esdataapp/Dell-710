@@ -37,7 +37,7 @@ def test_enhanced_registry():
     logger.info("🧪 Testing EnhancedScrapsRegistry...")
     
     try:
-        from enhanced_scraps_registry import EnhancedScrapsRegistry
+        from utils.enhanced_scraps_registry import EnhancedScrapsRegistry
         
         registry = EnhancedScrapsRegistry()
         
@@ -91,11 +91,11 @@ def test_scrapers():
             
             # Importar scraper específico
             if website == 'inmuebles24':
-                from scrapers.inmuebles24_professional import run_scraper
+                from scrapers.inm24 import run_scraper
             elif website == 'casas_y_terrenos':
-                from scrapers.casas_terrenos_professional import run_scraper
+                from scrapers.cyt import run_scraper
             elif website == 'mitula':
-                from scrapers.mitula_professional import run_scraper
+                from scrapers.mit import run_scraper
             else:
                 logger.warning(f"⚠️ Scraper {website} no implementado")
                 continue

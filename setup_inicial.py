@@ -181,9 +181,12 @@ def check_scrapers():
     
     scrapers_dir = Path('scrapers')
     required_scrapers = [
-        'inmuebles24_professional.py',
-        'casas_terrenos_professional.py',
-        'mitula_professional.py'
+        'inm24.py',
+        'cyt.py',
+        'mit.py',
+        'lam.py',
+        'prop.py',
+        'tro.py'
     ]
     
     missing_scrapers = []
