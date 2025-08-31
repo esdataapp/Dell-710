@@ -41,8 +41,8 @@ class ScrapsRegistry:
             2: "renta"
         }
         
-        # Cargar URLs desde el archivo CSV de Lista de URLs
-        self.csv_urls_file = self.project_root / 'Lista de URLs.csv'
+        # Cargar URLs desde el archivo CSV central ubicado en config/
+        self.csv_urls_file = self.project_root / 'config' / 'Lista de URLs.csv'
         self.urls_registry = self.load_urls_from_csv()
         
         # URLs específicas para Inmuebles24 según tu lista (legacy support)

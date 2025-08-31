@@ -26,8 +26,8 @@ class EnhancedScrapsRegistry:
         self.progress_file = self.project_root / 'data' / 'scraps_progress.json'
         self.setup_logging()
         
-        # Cargar URLs desde el archivo CSV de Lista de URLs
-        self.csv_urls_file = self.project_root / 'Lista de URLs.csv'
+        # Cargar URLs desde el archivo CSV central ubicado en config/
+        self.csv_urls_file = self.project_root / 'config' / 'Lista de URLs.csv'
         self.urls_registry = self.load_urls_from_csv()
         
         # Mapeo de sitios web
@@ -225,6 +225,21 @@ class EnhancedScrapsRegistry:
         except Exception as e:
             self.logger.error(f"Error obteniendo scraps pendientes: {e}")
             return []
+
+    def get_next_scraps_to_run(self, max_count: int = 4) -> List[Dict]:
+        """Obtener los próximos scraps a ejecutar según prioridades"""
+        pending_scraps = self.get_pending_scraps()
+        selected_scraps: List[Dict] = []
+        used_websites = set()
+
+        for scrap in pending_scraps:
+            if len(selected_scraps) >= max_count:
+                break
+            if scrap['website'] not in used_websites:
+                selected_scraps.append(scrap)
+                used_websites.add(scrap['website'])
+
+        return selected_scraps
     
     def get_scraps_by_website(self, website: str) -> List[Dict]:
         """Obtener todos los scraps de un sitio web específico"""
@@ -385,6 +400,10 @@ class EnhancedScrapsRegistry:
         except Exception as e:
             self.logger.error(f"Error obteniendo estadísticas: {e}")
             return stats
+
+    def get_registry_stats(self) -> Dict:
+        """Alias de get_statistics para compatibilidad"""
+        return self.get_statistics()
     
     def get_output_path(self, scrap_data: Dict) -> Path:
         """Obtener la ruta de salida para un scrap específico"""

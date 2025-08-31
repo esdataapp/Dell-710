@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Setup Inicial - PropertyScraper Dell710
-Script para configurar el sistema integrado con Lista de URLs.csv
+Script para configurar el sistema integrado con config/Lista de URLs.csv
 """
 
 import os
@@ -31,14 +31,14 @@ def setup_logging():
     return logging.getLogger(__name__)
 
 def check_csv_file():
-    """Verificar que Lista de URLs.csv existe y tiene la estructura correcta"""
+    """Verificar que config/Lista de URLs.csv existe y tiene la estructura correcta"""
     logger = logging.getLogger(__name__)
-    logger.info("📄 Verificando Lista de URLs.csv...")
-    
-    csv_path = Path('Lista de URLs.csv')
+    logger.info("📄 Verificando config/Lista de URLs.csv...")
+
+    csv_path = Path('config') / 'Lista de URLs.csv'
     
     if not csv_path.exists():
-        logger.error("❌ Lista de URLs.csv no encontrada")
+        logger.error("❌ config/Lista de URLs.csv no encontrada")
         logger.info("📋 Crear archivo Lista de URLs.csv con las columnas:")
         logger.info("   PaginaWeb,Estado,Ciudad,Operación,ProductoPaginaWeb,URL")
         return False
@@ -49,7 +49,7 @@ def check_csv_file():
             rows = list(reader)
         
         if not rows:
-            logger.error("❌ Lista de URLs.csv está vacía")
+            logger.error("❌ config/Lista de URLs.csv está vacía")
             return False
         
         # Verificar columnas requeridas
@@ -256,7 +256,7 @@ def setup_complete_check():
     logger.info("🔍 Verificación final del setup...")
     
     checks = [
-        ("Lista de URLs.csv", check_csv_file()),
+        ("config/Lista de URLs.csv", check_csv_file()),
         ("Dependencias Python", check_dependencies()),
         ("Scrapers", check_scrapers()),
         ("Registry", initialize_registry())
