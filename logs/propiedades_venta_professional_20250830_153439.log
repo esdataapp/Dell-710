@@ -1,9 +1,0 @@
-2025-08-30 15:34:39 |     INFO | 🚀 Iniciando Propiedades Professional Scraper
-2025-08-30 15:34:39 |     INFO |    Operation: venta
-2025-08-30 15:34:39 |     INFO |    Max pages: 1
-2025-08-30 15:34:39 |     INFO |    Resume from: 1
-2025-08-30 15:34:39 |     INFO |    Headless: True
-2025-08-30 15:34:39 |     INFO | 🚀 Iniciando scraping profesional de propiedades.com
-2025-08-30 15:34:39 |     INFO | ======================================================================
-2025-08-30 15:34:39 |     INFO | 🔧 Creando driver profesional optimizado...
-2025-08-30 15:34:39 |    ERROR | ❌ Error fatal en scraping: SB() got an unexpected keyword argument 'no_sandbox'

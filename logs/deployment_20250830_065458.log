@@ -1,4 +1,0 @@
-[06:54:58] INFO: 📋 Step 1/12: Checking local prerequisites
-[06:54:58] SUCCESS: ✅ SSH client available: OpenSSH_for_Windows_9.5p1,
-[06:54:58] WARNING: ⚠️ rsync not available, will use SCP as fallback
-[06:54:58] SUCCESS: ✅ All essential project files found
