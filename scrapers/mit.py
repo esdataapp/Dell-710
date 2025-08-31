@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import argparse
 
+from utils.url_utils import extract_url_column, load_urls_from_csv
+
 # Selenium imports
 from seleniumbase import SB
 from selenium.webdriver.common.by import By
@@ -25,17 +27,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-# Utility function to load URLs from CSV
-def load_urls_from_csv(path: str) -> List[str]:
-    """Load target URLs from a CSV file returning the fifth column."""
-    urls: List[str] = []
-    with open(path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader, None)  # skip header
-        for row in reader:
-            if len(row) > 4 and row[4]:
-                urls.append(row[4].strip())
-    return urls
 
 class MitulaProfessionalScraper:
     """
@@ -742,7 +733,8 @@ def main():
     else:
         default_csv = Path(__file__).parent.parent / 'URLs' / 'mit_urls.csv'
         csv_path = args.urls_file or default_csv
-        urls = load_urls_from_csv(csv_path)
+        url_entries = load_urls_from_csv(csv_path)
+        urls = [extract_url_column(row) for row in url_entries]
 
     success = True
     for target in urls:
@@ -767,7 +759,8 @@ def run_scraper(url: str = None, output_path: str = None,
     else:
         default_csv = Path(__file__).parent.parent / 'URLs' / 'mit_urls.csv'
         csv_path = urls_file or default_csv
-        urls = load_urls_from_csv(csv_path)
+        url_entries = load_urls_from_csv(csv_path)
+        urls = [extract_url_column(row) for row in url_entries]
 
     results: List[Dict] = []
     for target in urls:
