@@ -1,0 +1,18 @@
+# Development and optional dependencies for PropertyScraper Dell710
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Async operations (future experiments)
+aiohttp>=3.8.0
+asyncio-mqtt>=0.13.0
+
+# Documentation utilities
+python-docx>=1.1.0  # For generating .docx guides
+markdown-it-py>=3.0.0  # Optional Markdown parsing
+
+# Additional utilities for Dell T710 optimization
+watchdog>=3.0.0  # File system monitoring
+memory-profiler>=0.61.0  # Memory usage profiling
+py-cpuinfo>=9.0.0  # CPU information

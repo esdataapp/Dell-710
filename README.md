@@ -199,29 +199,36 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
 
 ## 📝 Quick Start
 
-1. **Crear estructura de datos**:
+1. **Instalar dependencias**:
+   ```bash
+   pip install -r requirements.txt
+   # Opcional: dependencias de desarrollo y pruebas
+   pip install -r dev-requirements.txt
+   ```
+
+2. **Crear estructura de datos**:
    ```bash
    python utils/create_data_structure.py
    ```
 
-2. **Ejecutar scraper individual**:
+3. **Ejecutar scraper individual**:
    ```bash
    # Inmuebles24 general
    python scrapers/inm24.py --headless --pages=100
-   
+
    # Casas y Terrenos
    python scrapers/cyt.py --headless --pages=50
-   
+
    # Lamudi
    python scrapers/lam.py --headless --pages=75
    ```
 
-3. **Ejecutar orquestación completa**:
+4. **Ejecutar orquestación completa**:
    ```bash
    python orchestrator/advanced_orchestrator.py
    ```
 
-4. **Programar ejecución bi-mensual**:
+5. **Programar ejecución bi-mensual**:
    ```bash
    python orchestrator/bimonthly_scheduler.py
    ```
