@@ -1,3 +1,0 @@
-# Ignore scraped data and generated outputs
-data/*
-!data/.gitkeep
