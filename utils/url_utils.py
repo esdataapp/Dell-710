@@ -1,4 +1,5 @@
 """Utility helpers for working with URL columns in CSV rows."""
+
 import csv
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
@@ -41,8 +42,9 @@ def load_urls_from_csv(path: str) -> List[Dict[str, str]]:
     """Read URL records from a CSV file.
 
     The CSV is expected to contain a header row. All columns are returned for
-    each entry, but rows without a URL value are skipped. The URL column name is
-    resolved using :func:`extract_url_column` to allow flexible headers.
+    each entry, but rows without a URL value are skipped.
+    The URL column name is resolved using :func:`extract_url_column`
+    to allow flexible headers.
 
     Args:
         path: Path to the CSV file.
