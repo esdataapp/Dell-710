@@ -41,7 +41,8 @@ class Inmuebles24ProfessionalScraper:
     Adaptado para trabajar con URLs del registro CSV
     """
     
-    def __init__(self, url=None, output_path=None, headless=True, max_pages=None, resume_from=None, operation_type='venta'):
+    def __init__(self, url=None, output_path=None, headless=True, max_pages=None,
+                 resume_from=None, operation_type='venta', city=None, product=None):
         # Parámetros principales
         self.target_url = url
         self.output_path = output_path
@@ -49,6 +50,8 @@ class Inmuebles24ProfessionalScraper:
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
         self.operation_type = operation_type  # venta, renta, venta-d, venta-r
+        self.city = city or 'unknown'
+        self.product = product or 'general'
         
         # Configuración de paths
         self.setup_paths()
@@ -82,6 +85,8 @@ class Inmuebles24ProfessionalScraper:
         self.logger.info(f"   Max pages: {max_pages}")
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
+        self.logger.info(f"   City: {self.city}")
+        self.logger.info(f"   Product: {self.product}")
     
     def setup_paths(self):
         """Configurar estructura de paths del proyecto"""
@@ -460,7 +465,7 @@ class Inmuebles24ProfessionalScraper:
         
         # Si existe la carpeta 1 y tiene archivos CSV, entonces esta es la segunda ejecución
         if execution_dir_1.exists():
-            csv_files = list(execution_dir_1.glob("I24_URLs_*.csv"))
+            csv_files = list(execution_dir_1.glob("*URL_*.csv"))
             if csv_files:
                 return "2"  # Segunda ejecución del mes
         
@@ -474,46 +479,44 @@ class Inmuebles24ProfessionalScraper:
         
         # Usar la ruta proporcionada o crear una por defecto
         if self.output_path:
-            csv_path = Path(self.output_path)
+            urls_path = Path(self.output_path)
         else:
-            # Generar nombre con formato I24_URLs_ene26_1.csv y estructura de carpetas optimizada
             current_date = datetime.now()
             month_abbrev = {
                 1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
                 7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
             }[current_date.month]
-            year_short = str(current_date.year)[-2:]  # Últimos 2 dígitos del año
-            
-            # Determinar si es la primera (1) o segunda (2) ejecución del mes automáticamente
+            year_short = str(current_date.year)[-2:]
             script_number = self.get_script_number(month_abbrev, year_short)
-            filename = f"I24_URLs_{month_abbrev}{year_short}_{script_number}.csv"
-            
-            # Crear estructura de carpetas: data/inm24/ven/ene26/1/ o data/inm24/ren/ene26/1/
-            month_year_folder = f"{month_abbrev}{year_short}"  # ene26, dic25, etc.
-            script_folder = script_number  # 1 o 2
+            city_code = self.city.replace(' ', '_')
+            op_code = self.operation_type.replace('-', '_')
+            product_code = self.product.replace(' ', '_')
+            filename = f"I24URL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{script_number}.csv"
+
+            month_year_folder = f"{month_abbrev}{year_short}"
+            script_folder = script_number
             execution_dir = self.data_dir / self.operation_folder / month_year_folder / script_folder
             execution_dir.mkdir(parents=True, exist_ok=True)
-            csv_path = execution_dir / filename
-        
-        # Crear directorio si no existe
-        csv_path.parent.mkdir(parents=True, exist_ok=True)
+            urls_path = execution_dir / filename
+
+        urls_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Guardar CSV
-        with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(urls_path, 'w', newline='', encoding='utf-8') as csvfile:
             if self.properties_data:
                 fieldnames = self.properties_data[0].keys()
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(self.properties_data)
-        
-        self.logger.info(f"💾 Resultados guardados en: {csv_path}")
+
+        self.logger.info(f"💾 Resultados guardados en: {urls_path}")
         
         # Limpiar checkpoint al finalizar exitosamente
         if self.checkpoint_file.exists():
             self.checkpoint_file.unlink()
             self.logger.info("🗑️  Checkpoint limpiado")
         
-        return str(csv_path)
+        return str(urls_path)
     
     def run(self) -> Dict:
         """Ejecutar scraping completo y retornar resultados"""
@@ -525,7 +528,7 @@ class Inmuebles24ProfessionalScraper:
             pages_processed, properties_found = self.scrape_pages()
             
             # Guardar resultados
-            csv_path = self.save_results()
+            urls_path = self.save_results()
             
             # Calcular estadísticas finales
             total_time = datetime.now() - self.start_time
@@ -540,8 +543,10 @@ class Inmuebles24ProfessionalScraper:
                 'total_time_seconds': total_time.total_seconds(),
                 'avg_time_per_page': avg_time_per_page,
                 'success_rate': success_rate,
-                'csv_file': csv_path,
-                'operation_type': self.target_url
+                'urls_file': urls_path,
+                'operation_type': self.operation_type,
+                'city': self.city,
+                'product': self.product
             }
             
             # Log final

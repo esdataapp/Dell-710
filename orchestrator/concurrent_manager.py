@@ -199,7 +199,9 @@ class ConcurrentScraperManager:
                 scraper = scraper_cls(
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
-                    operation_type=config.get('operation', 'venta')
+                    operation_type=config.get('operation', 'venta'),
+                    city=config.get('city'),
+                    product=config.get('product')
                 )
 
             elif site in ('inmuebles24_det', 'inm24_det'):
@@ -208,7 +210,9 @@ class ConcurrentScraperManager:
                     urls_file=config.get('urls_file'),
                     headless=config.get('headless', True),
                     max_properties=config.get('max_properties'),
-                    operation_type=config.get('operation', 'venta')
+                    operation_type=config.get('operation', 'venta'),
+                    city=config.get('city'),
+                    product=config.get('product')
                 )
 
             elif site in ('lamudi', 'lam'):
@@ -217,7 +221,9 @@ class ConcurrentScraperManager:
                     headless=config.get('headless', True),
                     max_pages=config.get('max_pages'),
                     resume_from=config.get('resume_from'),
-                    operation_type=config.get('operation', 'venta')
+                    operation_type=config.get('operation', 'venta'),
+                    city=config.get('city'),
+                    product=config.get('product')
                 )
 
             elif site in ('lamudi_det', 'lam_det'):
@@ -226,7 +232,9 @@ class ConcurrentScraperManager:
                     urls_file=config.get('urls_file'),
                     headless=config.get('headless', True),
                     max_properties=config.get('max_properties'),
-                    operation_type=config.get('operation', 'venta')
+                    operation_type=config.get('operation', 'venta'),
+                    city=config.get('city'),
+                    product=config.get('product')
                 )
 
             elif site in ('casas_y_terrenos', 'cyt'):
@@ -351,24 +359,26 @@ class ConcurrentScraperManager:
                             self.logger.info(f"✅ Scraper completado: {scraper_id}")
 
                             # Programar scraper dependiente si aplica
-                            csv_file = result.get('csv_file')
+                            urls_file = result.get('urls_file')
                             site = thread_info['task']['config']['site']
-                            if csv_file and site in ('inmuebles24', 'inm24', 'lamudi', 'lam'):
+                            if urls_file and site in ('inmuebles24', 'inm24', 'lamudi', 'lam'):
                                 detail_site = 'inm24_det' if site in ('inmuebles24', 'inm24') else 'lam_det'
                                 detail_config = {
                                     'site': detail_site,
                                     'operation': thread_info['task']['config'].get('operation'),
-                                    'urls_file': csv_file,
+                                    'city': result.get('city') or thread_info['task']['config'].get('city'),
+                                    'product': result.get('product') or thread_info['task']['config'].get('product'),
+                                    'urls_file': urls_file,
                                     'headless': thread_info['task']['config'].get('headless', True),
                                     'priority': thread_info['task']['config'].get('priority', 1)
                                 }
                                 new_task_id = self.add_scraper_task(detail_config)
                                 self.task_dependencies[new_task_id] = {
                                     'depends_on': scraper_id,
-                                    'csv_file': csv_file
+                                    'csv_file': urls_file
                                 }
                                 self.logger.info(
-                                    f"🔁 Scraper dependiente programado: {new_task_id} -> {scraper_id} ({csv_file})")
+                                    f"🔁 Scraper dependiente programado: {new_task_id} -> {scraper_id} ({urls_file})")
                         else:
                             self.failed_scrapers[scraper_id] = result
                             self.logger.error(f"❌ Scraper falló: {scraper_id}")

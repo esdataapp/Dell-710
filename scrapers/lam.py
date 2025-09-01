@@ -29,11 +29,14 @@ class LamudiProfessionalScraper:
     Optimizado para ejecución en Dell T710 Ubuntu Server
     """
     
-    def __init__(self, headless=True, max_pages=None, resume_from=None, operation_type='venta'):
+    def __init__(self, headless=True, max_pages=None, resume_from=None,
+                 operation_type='venta', city=None, product=None):
         self.headless = headless
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
         self.operation_type = operation_type  # 'venta' o 'renta'
+        self.city = city or 'unknown'
+        self.product = product or 'general'
         
         # Configuración de paths
         self.setup_paths()
@@ -65,6 +68,8 @@ class LamudiProfessionalScraper:
         self.logger.info(f"   Max pages: {max_pages}")
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
+        self.logger.info(f"   City: {self.city}")
+        self.logger.info(f"   Product: {self.product}")
     
     def setup_paths(self):
         """Configurar estructura de paths del proyecto"""
@@ -554,7 +559,7 @@ class LamudiProfessionalScraper:
         except Exception as e:
             self.logger.error(f"❌ Error guardando URLs: {e}")
     
-    def save_results(self) -> str:
+    def save_results(self) -> Tuple[str, str]:
         """Guardar resultados en formato CSV con metadata"""
         if not self.properties_data:
             self.logger.warning("⚠️  No hay datos para guardar")
@@ -582,7 +587,10 @@ class LamudiProfessionalScraper:
                 writer.writerows(self.properties_data)
         
         # Guardar URLs para el segundo scraper en la misma carpeta
-        urls_filename = f"LAM_URLs_{month_abbrev}{year_short}_{script_number}.csv"
+        city_code = self.city.replace(' ', '_')
+        op_code = self.operation_type.replace('-', '_')
+        product_code = self.product.replace(' ', '_')
+        urls_filename = f"LAMURL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{script_number}.csv"
         urls_path = self.data_dir / urls_filename
         if self.property_urls:
             with open(urls_path, 'w', encoding='utf-8') as f:
@@ -594,6 +602,8 @@ class LamudiProfessionalScraper:
             'execution_info': {
                 'timestamp': timestamp,
                 'operation_type': self.operation_type,
+                'city': self.city,
+                'product': self.product,
                 'total_pages_processed': self.pages_processed,
                 'total_properties_found': self.properties_found,
                 'total_urls_collected': len(self.property_urls),
@@ -630,7 +640,7 @@ class LamudiProfessionalScraper:
             self.checkpoint_file.unlink()
             self.logger.info("🗑️  Checkpoint limpiado")
         
-        return str(csv_path)
+        return str(csv_path), str(urls_path)
     
     def run(self) -> Dict:
         """Ejecutar scraping completo y retornar resultados"""
@@ -640,9 +650,9 @@ class LamudiProfessionalScraper:
         try:
             # Ejecutar scraping
             pages_processed, properties_found = self.scrape_pages()
-            
+
             # Guardar resultados
-            csv_path = self.save_results()
+            csv_path, urls_path = self.save_results()
             
             # Calcular estadísticas finales
             total_time = datetime.now() - self.start_time
@@ -659,7 +669,10 @@ class LamudiProfessionalScraper:
                 'avg_time_per_page': avg_time_per_page,
                 'success_rate': success_rate,
                 'csv_file': csv_path,
-                'operation_type': self.operation_type
+                'urls_file': urls_path,
+                'operation_type': self.operation_type,
+                'city': self.city,
+                'product': self.product
             }
             
             # Log final

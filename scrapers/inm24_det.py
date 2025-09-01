@@ -30,12 +30,15 @@ class Inmuebles24UnicoProfessionalScraper:
     Segunda fase del proceso de scraping - procesa URLs individuales
     """
     
-    def __init__(self, urls_file=None, headless=True, max_properties=None, resume_from=None, operation_type='venta'):
+    def __init__(self, urls_file=None, headless=True, max_properties=None,
+                 resume_from=None, operation_type='venta', city=None, product=None):
         self.urls_file = urls_file
         self.headless = headless
         self.max_properties = max_properties
         self.resume_from = resume_from or 0
         self.operation_type = operation_type
+        self.city = city or 'unknown'
+        self.product = product or 'general'
         
         # Configuración de paths
         self.setup_paths()
@@ -64,6 +67,8 @@ class Inmuebles24UnicoProfessionalScraper:
         self.logger.info(f"   Max properties: {max_properties}")
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
+        self.logger.info(f"   City: {self.city}")
+        self.logger.info(f"   Product: {self.product}")
     
     def setup_paths(self):
         """Configurar estructura de paths del proyecto"""
@@ -110,40 +115,37 @@ class Inmuebles24UnicoProfessionalScraper:
         urls = []
         
         if not self.urls_file:
-            # Buscar el CSV más reciente del primer script (I24_URLs_*.csv)
-            pattern = f"I24_URLs_*.csv"
-            csv_files = list(self.data_dir.glob(f"**/{pattern}"))
-            if csv_files:
-                latest_csv = max(csv_files, key=lambda x: x.stat().st_mtime)
-                self.logger.info(f"📂 Usando CSV más reciente: {latest_csv}")
-                
-                # Extraer URLs del CSV
-                try:
-                    import pandas as pd
-                    df = pd.read_csv(latest_csv)
-                    if 'link' in df.columns:
-                        urls = df['link'].dropna().tolist()
-                        self.logger.info(f"📂 Extraídas {len(urls)} URLs del CSV")
-                    else:
-                        self.logger.error("❌ Columna 'link' no encontrada en el CSV")
-                except Exception as e:
-                    self.logger.error(f"❌ Error leyendo CSV: {e}")
+            city_code = self.city.replace(' ', '_')
+            op_code = self.operation_type.replace('-', '_')
+            product_code = self.product.replace(' ', '_')
+            pattern = f"*URL_{city_code}_{op_code}_{product_code}_*.csv"
+            search_path = self.project_root / 'data' / 'inm24'
+            url_files = list(search_path.rglob(pattern))
+            if url_files:
+                self.urls_file = max(url_files, key=lambda x: x.stat().st_mtime)
+                self.logger.info(f"📂 Usando archivo de URLs: {self.urls_file}")
             else:
-                # Buscar archivo de URLs de texto con nueva nomenclatura
-                pattern = f"I24_URLs_*.txt"
-                url_files = list(self.data_dir.glob(f"**/{pattern}"))
-                if url_files:
-                    self.urls_file = max(url_files, key=lambda x: x.stat().st_mtime)
-                    self.logger.info(f"📂 Usando archivo de URLs: {self.urls_file}")
-                else:
-                    self.logger.error("❌ No se encontró archivo de URLs ni CSV")
-                    return []
+                self.logger.error("❌ No se encontró archivo de URLs")
+                return []
+
+        self.data_dir = Path(self.urls_file).parent
         
         # Si tenemos archivo de URLs específico, usarlo
         if self.urls_file and not urls:
             try:
                 with open(self.urls_file, 'r', encoding='utf-8') as f:
-                    urls = [line.strip() for line in f if line.strip()]
+                    reader = csv.DictReader(f)
+                    field = None
+                    if reader.fieldnames:
+                        if 'link' in reader.fieldnames:
+                            field = 'link'
+                        elif 'url' in reader.fieldnames:
+                            field = 'url'
+                    if field:
+                        urls = [row[field] for row in reader if row.get(field)]
+                    else:
+                        f.seek(0)
+                        urls = [line.strip() for line in f if line.strip()]
                 self.logger.info(f"📂 Cargadas {len(urls)} URLs desde {self.urls_file}")
             except Exception as e:
                 self.logger.error(f"❌ Error cargando URLs: {e}")
@@ -909,80 +911,24 @@ class Inmuebles24UnicoProfessionalScraper:
         return "1"  # Primera ejecución del mes
 
     def save_results(self) -> str:
-        """Guardar resultados en formato CSV con metadata"""
+        """Guardar resultados en archivo CSV basado en el archivo de URLs"""
         if not self.properties_data:
             self.logger.warning("⚠️  No hay datos para guardar")
             return None
-        
-        # Generar timestamp para archivos
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Determinar carpeta de destino con nueva nomenclatura
-        current_date = datetime.now()
-        month_abbrev = {
-            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
-            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-        }[current_date.month]
-        year_short = str(current_date.year)[-2:]  # Últimos 2 dígitos del año
-        
-        # Determinar si es la primera (1) o segunda (2) ejecución del mes automáticamente
-        script_number = self.get_script_number(month_abbrev, year_short)
-        
-        # Crear estructura de carpetas: inm24/ven/ene26/1/
-        month_year_folder = f"{month_abbrev}{year_short}"  # ene26, dic25, etc.
-        script_folder = script_number  # 1 o 2
-        execution_dir = self.data_dir / month_year_folder / script_folder
-        execution_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Archivo CSV de detalles con nuevo formato: inm24_ene26_1.csv
-        csv_filename = f"inm24_{month_abbrev}{year_short}_{script_number}.csv"
-        csv_path = execution_dir / csv_filename
-        
-        # Guardar CSV
+
+        output_filename = Path(self.urls_file).name.replace("URL_", "")
+        csv_path = self.data_dir / output_filename
+
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-            if self.properties_data:
-                fieldnames = self.properties_data[0].keys()
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(self.properties_data)
-        
-        # Metadata
-        metadata = {
-            'execution_info': {
-                'timestamp': timestamp,
-                'operation_type': self.operation_type,
-                'total_urls_provided': len(self.property_urls),
-                'properties_processed': self.properties_processed,
-                'successful_extractions': self.successful_extractions,
-                'errors_count': self.errors_count,
-                'execution_time_seconds': (datetime.now() - self.start_time).total_seconds(),
-                'csv_filename': csv_filename,
-                'log_filename': self.log_file.name,
-                'urls_file_used': str(self.urls_file) if self.urls_file else None
-            },
-            'system_info': {
-                'scraper_version': '1.0.0',
-                'scraper_type': 'detailed_individual_properties',
-                'python_version': sys.version,
-                'headless_mode': self.headless,
-                'max_properties_limit': self.max_properties,
-                'resume_from_index': self.resume_from
-            }
-        }
-        
-        metadata_path = execution_dir / f"metadata_unico_{timestamp}.json"
-        with open(metadata_path, 'w', encoding='utf-8') as f:
-            json.dump(metadata, f, indent=2, ensure_ascii=False)
-        
-        self.logger.info(f"💾 Resultados guardados:")
-        self.logger.info(f"   📄 CSV Detalles: {csv_path}")
-        self.logger.info(f"   📋 Metadata: {metadata_path}")
-        
-        # Limpiar checkpoint al finalizar exitosamente
+            fieldnames = self.properties_data[0].keys()
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(self.properties_data)
+
         if self.checkpoint_file.exists():
             self.checkpoint_file.unlink()
-            self.logger.info("🗑️  Checkpoint limpiado")
-        
+
+        self.logger.info(f"💾 Resultados guardados en: {csv_path}")
         return str(csv_path)
     
     def run(self) -> Dict:
@@ -1019,7 +965,9 @@ class Inmuebles24UnicoProfessionalScraper:
                 'avg_time_per_property': avg_time_per_property,
                 'success_rate': success_rate,
                 'csv_file': csv_path,
-                'operation_type': self.operation_type
+                'operation_type': self.operation_type,
+                'city': self.city,
+                'product': self.product
             }
             
             # Log final
