@@ -140,8 +140,10 @@ data/{scraper_abrev}/{operation_abrev}/{mesAño}/{script}/
 
 ### Archivos de URLs
 
-Los archivos CSV en `URLs/` son la única fuente de URLs del sistema y
-comparten las siguientes columnas:
+Los archivos CSV en `URLs/` son la única fuente de URLs del sistema. Los
+scrapers y el orquestador inspeccionan automáticamente todos los archivos en
+esta carpeta, por lo que no se requieren rutas hardcodeadas ni nombres de
+archivo específicos. Cada CSV comparte las siguientes columnas:
 
 ```csv
 PaginaWeb,Ciudad,Operacion,ProductoPaginaWeb,URL

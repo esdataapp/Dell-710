@@ -22,6 +22,8 @@ Sistema profesional de web scraping para bienes raíces optimizado para Dell Pow
 - **URLs/**: Carpeta con archivos CSV por sitio
 - **Estructura unificada**: PaginaWeb → Ciudad → Operacion → ProductoPaginaWeb → URL
 - **Gestión automática**: Configuración centralizada sin URLs hardcodeadas
+- **Descubrimiento dinámico**: Scrapers y orquestador recorren todos los CSV en
+  `URLs/` para obtener las listas de páginas objetivo
 
 ## 📊 Estructura de los CSV
 
