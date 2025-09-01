@@ -25,7 +25,6 @@ Objetivo: extraer, de forma robusta y repetible, listados de propiedades para ve
 - ssh_deployment/remote_executor.py: despliegue, sync e invocación remota en el servidor por Paramiko.
 - monitoring/performance_monitor.py: métricas y alertas de CPU/Memoria/Disco/Red.
 - utils/
-  - create_data_structure.py: genera árbol de data por sitio/operación/mes/ejecución.
   - gdrive_backup_manager.py: respaldo a Google Drive por rclone; soporta modo automático en background.
 - config/
   - dell_t710_config.yaml: umbrales de recursos, horarios, rutas remotas.
@@ -47,12 +46,10 @@ Stack principal: Python 3.12+, SeleniumBase/Selenium, Paramiko, psutil, schedule
 
 ## Organización de datos
 
-Ruta: data/[sitio]/[operacion]/[Mes Año]/[1er_script_del_mes|2do_script_del_mes]
+Ruta: data/[sitio]/[operacion]/[Mon YYYY]/[01|02]
 - CSV resultado principal (uno o varios por ejecución).
-- metadata_*.json con timing, parámetros, totales extraídos.
-- Logs asociados en logs/ con timestamp.
-
-La utilidad utils/create_data_structure.py pre-crea todas las carpetas futuras (meses/ejecuciones), de modo que los scrapers sólo escriben.
+- `metadata_run_XX.json` con timing, parámetros y totales.
+- `monitor_run_XX.log` con registro de monitoreo.
 
 ## Orquestación y concurrencia
 
@@ -73,7 +70,7 @@ La utilidad utils/create_data_structure.py pre-crea todas las carpetas futuras (
 - remote_executor.py (Paramiko):
   - connect(): abre SSH + SFTP, verifica sistema remoto.
   - sync_project_files(): sincroniza código (excluye patrones definidos).
-  - deploy_project(): instala requirements y crea estructura de data.
+  - deploy_project(): instala requirements.
   - execute_scraper(): ejecuta un scraper con parámetros y captura salida.
 
 Requisitos previos en el servidor (Ubuntu 24): Python3, pip, Chrome estable, rclone configurado, usuario scraper con venv.
@@ -120,7 +117,7 @@ Recomendado: iniciar el modo automático al comenzar la orquestación para que e
    - Entradas: headless: bool, max_pages: int, operation_type: "venta|renta".
    - Método run() → dict: {success: bool, total_properties: int, output_files: [paths], metadata_path: str}.
    - Respetar tiempos, waits y técnicas de anti-detección usadas en inmuebles24_professional.
-   - Guardar CSV+metadata en la ruta data/[sitio]/[operacion]/[Mes Año]/[ejecución]/.
+   - Guardar CSV+metadata en la ruta data/[sitio]/[operacion]/[Mon YYYY]/[01|02]/.
 2) Integrar en ConcurrentScraperManager:
    - Importar la clase.
    - Agregar case en run_scraper_process() para construir e invocar el scraper según config['site'].

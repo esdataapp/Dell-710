@@ -65,9 +65,10 @@ PropertyScraper-Dell710/
 │   └── resource_monitor.py            # Monitor de recursos Dell T710
 │
 ├── 🔧 utils/                    # Utilidades y herramientas
-│   ├── create_data_structure.py       # Generador de carpetas automático
-│   ├── ssh_connector.py               # Conexiones SSH
-│   └── data_validator.py              # Validación de datos
+│   ├── checkpoint_recovery.py        # Recuperación tras fallos
+│   ├── gdrive_backup_manager.py      # Respaldo a Google Drive
+│   ├── enhanced_scraps_registry.py   # Registro de ejecuciones
+│   └── url_utils.py                  # Utilidades de manejo de URLs
 │
 ├── ⚙️  config/                  # Configuraciones del sistema
 │   ├── dell_t710_config.yaml          # Config principal Dell T710
@@ -87,9 +88,9 @@ PropertyScraper-Dell710/
 ├── 📄 data/                     # Datos organizados
 │   ├── inmuebles24/
 │   │   ├── venta/
-│   │   │   ├── Agosto 2025/
-│   │   │   │   ├── 1er_script_del_mes/
-│   │   │   │   └── 2do_script_del_mes/
+│   │   │   ├── Aug2025/
+│   │   │   │   ├── 01/
+│   │   │   │   └── 02/
 │   │   │   └── [otros meses]...
 │   │   └── renta/
 │   └── [otros sitios]/
@@ -208,12 +209,6 @@ sudo -u scraper python3 -m venv /home/scraper/venv
    python ssh_deployment/remote_executor.py --status
    ```
 
-3. **Crear estructura de datos**:
-   ```bash
-   # Se ejecuta automáticamente durante el despliegue
-   # O manualmente:
-   python utils/create_data_structure.py
-   ```
 
 ### ✅ Verificación de Instalación
 
@@ -640,7 +635,7 @@ timestamp,operation_type,titulo,precio,ubicacion,caracteristicas,link
 
 ---
 
-**Versión**: 1.0.0  
-**Fecha**: Agosto 2025  
+**Versión**: 1.0.0
+**Fecha**: Aug 2025
 **Desarrollado para**: Dell PowerEdge T710 + Ubuntu Server 24  
 **Control desde**: Windows 11 via SSH
