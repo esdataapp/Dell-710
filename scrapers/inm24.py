@@ -619,35 +619,29 @@ def main():
         args.headless = True
     
     # Crear y ejecutar scraper
-    scraper = Inmuebles24ProfessionalScraper(
+    results = run_scraper(
         url=args.url,
         output_path=args.output,
-        headless=args.headless,
         max_pages=args.pages,
+        headless=args.headless,
         resume_from=args.resume,
         operation_type=args.operation,
         city=args.city,
-        product=args.product
+        product=args.product,
     )
-    
-    results = scraper.run()
     
     # Retornar código de salida apropiado
     sys.exit(0 if results['success'] else 1)
 
-def run_scraper(url: str, output_path: str, city: str = None,
-                product: str = None, max_pages: int = None) -> Dict:
-    """Función de interfaz para usar desde el orquestador"""
+def run_scraper(url: str, output_path: str,
+                max_pages: int | None = None, **kwargs) -> Dict:
+    """Ejecuta el scraper para una URL específica."""
     scraper = Inmuebles24ProfessionalScraper(
         url=url,
         output_path=output_path,
-        headless=True,
         max_pages=max_pages,
-        resume_from=1,
-        city=city,
-        product=product
+        **kwargs,
     )
-    
     return scraper.run()
 
 if __name__ == "__main__":

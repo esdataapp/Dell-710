@@ -743,43 +743,28 @@ def main():
 
     success = True
     for target in urls:
-        scraper = MitulaProfessionalScraper(
+        result = run_scraper(
             url=target,
             output_path=args.output,
-            headless=args.headless,
             max_pages=args.pages,
+            headless=args.headless,
             resume_from=args.resume,
-            operation_type=args.operation
+            operation_type=args.operation,
         )
-        result = scraper.run()
         success = success and result.get('success', False)
 
     sys.exit(0 if success else 1)
 
-def run_scraper(url: str = None, output_path: str = None,
-                max_pages: int = None, urls_file: str = None) -> List[Dict]:
-    """Interface function used by orchestrator for multiple URLs."""
-    if url:
-        urls = [url]
-    elif urls_file:
-        url_entries = load_urls_from_csv(urls_file)
-        urls = [extract_url_column(row) for row in url_entries]
-    else:
-        urls_dir = Path(__file__).parent.parent / 'URLs'
-        urls = load_urls_for_site(urls_dir, 'mitula')
-
-    results: List[Dict] = []
-    for target in urls:
-        scraper = MitulaProfessionalScraper(
-            url=target,
-            output_path=output_path,
-            headless=True,
-            max_pages=max_pages,
-            resume_from=1
-        )
-        results.append(scraper.run())
-
-    return results
+def run_scraper(url: str, output_path: str,
+                max_pages: int | None = None, **kwargs) -> Dict:
+    """Ejecuta el scraper para una URL específica."""
+    scraper = MitulaProfessionalScraper(
+        url=url,
+        output_path=output_path,
+        max_pages=max_pages,
+        **kwargs,
+    )
+    return scraper.run()
 
 if __name__ == "__main__":
     main()

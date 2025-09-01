@@ -28,9 +28,11 @@ class LamudiProfessionalScraper:
     Scraper profesional para lamudi.com.mx con capacidades de resilencia
     Optimizado para ejecución en Dell T710 Ubuntu Server
     """
-    
-    def __init__(self, headless=True, max_pages=None, resume_from=None,
-                 operation_type='venta', city=None, product=None):
+
+    def __init__(self, url=None, output_path=None, headless=True, max_pages=None,
+                 resume_from=None, operation_type='venta', city=None, product=None):
+        self.target_url = url
+        self.output_path = output_path
         self.headless = headless
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
@@ -49,7 +51,9 @@ class LamudiProfessionalScraper:
         self.checkpoint_interval = 50  # Guardar cada 50 páginas
         
         # Configuración del scraper
-        if operation_type == 'venta':
+        if self.target_url:
+            self.base_url = self.target_url
+        elif operation_type == 'venta':
             self.base_url = "https://www.lamudi.com.mx/mexico-df/for-sale/"
         else:
             self.base_url = "https://www.lamudi.com.mx/mexico-df/for-rent/"
@@ -578,7 +582,10 @@ class LamudiProfessionalScraper:
             f"{self.site_name}_{ciudad_cap}_{operacion_cap}_{producto_cap}_"
             f"{self.month_year}_{run_str}.csv"
         )
-        csv_path = self.run_dir / csv_filename
+        if self.output_path:
+            csv_path = Path(self.output_path)
+        else:
+            csv_path = self.run_dir / csv_filename
 
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
             if self.properties_data:
@@ -700,7 +707,11 @@ class LamudiProfessionalScraper:
 def main():
     """Función principal con argumentos de línea de comandos"""
     parser = argparse.ArgumentParser(description='Lamudi Professional Scraper')
-    parser.add_argument('--headless', action='store_true', default=True, 
+    parser.add_argument('--url', type=str, default=None,
+                       help='URL objetivo para hacer scraping')
+    parser.add_argument('--output', type=str,
+                       help='Archivo de salida CSV')
+    parser.add_argument('--headless', action='store_true', default=True,
                        help='Ejecutar en modo headless (sin GUI)')
     parser.add_argument('--pages', type=int, default=None, 
                        help='Número máximo de páginas a procesar')
@@ -722,19 +733,31 @@ def main():
         args.headless = False
     
     # Crear y ejecutar scraper
-    scraper = LamudiProfessionalScraper(
-        headless=args.headless,
+    results = run_scraper(
+        url=args.url,
+        output_path=args.output,
         max_pages=args.pages,
+        headless=args.headless,
         resume_from=args.resume,
         operation_type=args.operation,
         city=args.city,
-        product=args.product
+        product=args.product,
     )
-    
-    results = scraper.run()
     
     # Retornar código de salida apropiado
     sys.exit(0 if results['success'] else 1)
+
+
+def run_scraper(url: str, output_path: str,
+                max_pages: int | None = None, **kwargs) -> Dict:
+    """Ejecuta el scraper para una URL específica."""
+    scraper = LamudiProfessionalScraper(
+        url=url,
+        output_path=output_path,
+        max_pages=max_pages,
+        **kwargs,
+    )
+    return scraper.run()
 
 if __name__ == "__main__":
     main()

@@ -67,25 +67,30 @@ class PropiedadesProfessionalScraper:
     Scraper profesional para propiedades.com con capacidades de resilencia
     Optimizado para ejecución en Dell T710 Ubuntu Server
     """
-    
-    def __init__(self, headless=True, max_pages=None, resume_from=None, operation_type='venta'):
+
+    def __init__(self, url=None, output_path=None, headless=True, max_pages=None,
+                 resume_from=None, operation_type='venta'):
+        self.target_url = url
+        self.output_path = output_path
         self.headless = headless
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
         self.operation_type = operation_type  # 'venta' o 'renta'
-        
+
         # Configuración de paths
         self.setup_paths()
-        
+
         # Configuración de logging
         self.setup_logging()
-        
+
         # Checkpoint system
         self.checkpoint_file = self.checkpoint_dir / f"propiedades_{operation_type}_checkpoint.pkl"
         self.checkpoint_interval = 50  # Guardar cada 50 páginas
-        
+
         # Configuración del scraper
-        if operation_type == 'venta':
+        if self.target_url:
+            self.base_url = self.target_url
+        elif operation_type == 'venta':
             self.base_url = "https://propiedades.com/df/departamentos"
         else:
             self.base_url = "https://propiedades.com/df/departamentos-en-renta"
@@ -520,7 +525,10 @@ class PropiedadesProfessionalScraper:
         
         # Archivo CSV principal con nueva nomenclatura
         csv_filename = f"prop_{month_abbrev}{year_short}_{script_number}.csv"
-        csv_path = self.data_dir / csv_filename
+        if self.output_path:
+            csv_path = Path(self.output_path)
+        else:
+            csv_path = self.data_dir / csv_filename
         
         # Guardar CSV
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
@@ -624,6 +632,8 @@ def main():
                        help='URL única a procesar')
     parser.add_argument('--urls-file', type=str,
                        help='Archivo CSV con URLs a procesar')
+    parser.add_argument('--output', type=str,
+                       help='Archivo de salida CSV')
     parser.add_argument('--headless', action='store_true', default=True,
                        help='Ejecutar en modo headless (sin GUI)')
     parser.add_argument('--pages', type=int, default=None,
@@ -650,42 +660,29 @@ def main():
 
     success = True
     for target in urls:
-        scraper = PropiedadesProfessionalScraper(
-            headless=args.headless,
+        result = run_scraper(
+            url=target,
+            output_path=args.output,
             max_pages=args.pages,
+            headless=args.headless,
             resume_from=args.resume,
-            operation_type=args.operation
+            operation_type=args.operation,
         )
-        scraper.base_url = target
-        result = scraper.run()
         success = success and result.get('success', False)
 
     sys.exit(0 if success else 1)
 
 
-def run_scraper(url: str = None, max_pages: int = None,
-                urls_file: str = None) -> List[Dict]:
-    """Interface function for orchestrator to handle multiple URLs."""
-    if url:
-        urls = [url]
-    else:
-        default_csv = Path(__file__).parent.parent / 'URLs' / 'prop_urls.csv'
-        csv_path = urls_file or default_csv
-        url_entries = load_urls_from_csv(csv_path)
-        urls = [extract_url_column(row) for row in url_entries]
-
-    results: List[Dict] = []
-    for target in urls:
-        scraper = PropiedadesProfessionalScraper(
-            headless=True,
-            max_pages=max_pages,
-            resume_from=1,
-            operation_type='venta'
-        )
-        scraper.base_url = target
-        results.append(scraper.run())
-
-    return results
+def run_scraper(url: str, output_path: str,
+                max_pages: int | None = None, **kwargs) -> Dict:
+    """Ejecuta el scraper para una URL específica."""
+    scraper = PropiedadesProfessionalScraper(
+        url=url,
+        output_path=output_path,
+        max_pages=max_pages,
+        **kwargs,
+    )
+    return scraper.run()
 
 if __name__ == "__main__":
     main()

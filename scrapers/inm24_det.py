@@ -29,11 +29,13 @@ class Inmuebles24UnicoProfessionalScraper:
     Scraper profesional para detalles de propiedades individuales de inmuebles24.com
     Segunda fase del proceso de scraping - procesa URLs individuales
     """
-    
-    def __init__(self, urls_file=None, headless=True, max_properties=None, resume_from=None, operation_type='venta'):
-        self.urls_file = urls_file
+
+    def __init__(self, url=None, output_path=None, max_pages=None,
+                 headless=True, resume_from=None, operation_type='venta', urls_file=None):
+        self.urls_file = urls_file or url
+        self.output_path = output_path
+        self.max_properties = max_pages
         self.headless = headless
-        self.max_properties = max_properties
         self.resume_from = resume_from or 0
         self.operation_type = operation_type
         
@@ -58,12 +60,12 @@ class Inmuebles24UnicoProfessionalScraper:
         self.errors_count = 0
         
         self.logger.info(f"🚀 Iniciando Inmuebles24 Unico Professional Scraper")
-        self.logger.info(f"   URLs file: {urls_file}")
+        self.logger.info(f"   URLs file: {self.urls_file}")
         self.logger.info(f"   Total URLs: {len(self.property_urls)}")
-        self.logger.info(f"   Operation: {operation_type}")
-        self.logger.info(f"   Max properties: {max_properties}")
-        self.logger.info(f"   Resume from: {resume_from}")
-        self.logger.info(f"   Headless: {headless}")
+        self.logger.info(f"   Operation: {self.operation_type}")
+        self.logger.info(f"   Max properties: {self.max_properties}")
+        self.logger.info(f"   Resume from: {self.resume_from}")
+        self.logger.info(f"   Headless: {self.headless}")
     
     def setup_paths(self):
         """Configurar estructura de paths del proyecto"""
@@ -1049,6 +1051,8 @@ def main():
     parser = argparse.ArgumentParser(description='Inmuebles24 Unico Professional Scraper')
     parser.add_argument('--urls-file', type=str, default=None,
                        help='Archivo con URLs de propiedades a procesar')
+    parser.add_argument('--output', type=str,
+                       help='Archivo de salida CSV')
     parser.add_argument('--headless', action='store_true', default=True, 
                        help='Ejecutar en modo headless (sin GUI)')
     parser.add_argument('--properties', type=int, default=None, 
@@ -1070,18 +1074,29 @@ def main():
         args.headless = True
     
     # Crear y ejecutar scraper
-    scraper = Inmuebles24UnicoProfessionalScraper(
-        urls_file=args.urls_file,
+    results = run_scraper(
+        url=args.urls_file,
+        output_path=args.output,
+        max_pages=args.properties,
         headless=args.headless,
-        max_properties=args.properties,
         resume_from=args.resume,
-        operation_type=args.operation
+        operation_type=args.operation,
     )
-    
-    results = scraper.run()
     
     # Retornar código de salida apropiado
     sys.exit(0 if results['success'] else 1)
+
+def run_scraper(url: str, output_path: str,
+                max_pages: int | None = None, **kwargs) -> Dict:
+    """Ejecuta el scraper para un archivo de URLs específico."""
+    scraper = Inmuebles24UnicoProfessionalScraper(
+        url=url,
+        output_path=output_path,
+        max_pages=max_pages,
+        **kwargs,
+    )
+    return scraper.run()
+
 
 if __name__ == "__main__":
     main()
