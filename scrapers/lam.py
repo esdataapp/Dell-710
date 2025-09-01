@@ -22,6 +22,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from utils.path_builder import build_path
 
 class LamudiProfessionalScraper:
     """
@@ -73,58 +74,18 @@ class LamudiProfessionalScraper:
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
         self.logs_dir = self.project_root / 'logs'
-        self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
+        self.checkpoint_dir = self.logs_dir / 'checkpoints'
         self.site_name = 'Lam'
 
-        ciudad_cap = (city or 'Ciudad').capitalize()
-        operacion_cap = (operation or 'Operacion').capitalize()
-        producto_cap = (product or 'Producto').capitalize()
-
-        now = datetime.now()
-        month_abbrev = {
-            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
-            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-        }[now.month]
-        year_short = str(now.year)[-2:]
-        self.month_year = f"{month_abbrev}{year_short}"
-
-        base_dir = (self.project_root / 'data' / self.site_name /
-                    ciudad_cap / operacion_cap / producto_cap / self.month_year)
-        run_number = 1
-        while (base_dir / str(run_number)).exists():
-            run_number += 1
-        self.run_number = run_number
-        self.run_dir = base_dir / str(run_number)
+        path_info = build_path(self.site_name, city or 'Ciudad', operation or 'Operacion', product or 'Producto')
+        self.month_year = path_info.month_year
+        self.run_number = int(path_info.run_number)
+        self.run_dir = path_info.directory
         self.data_dir = self.run_dir
 
-        for directory in [self.logs_dir, self.checkpoint_dir, self.run_dir]:
+        for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
     
-    def get_month_abbreviation(self, month_num):
-        """Obtener abreviatura de 3 letras del mes"""
-        month_abbrevs = {
-            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
-            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-        }
-        return month_abbrevs.get(month_num, 'unk')
-    
-    def get_script_number(self, month_abbrev, year_short):
-        """Detectar automáticamente el número de script basado en carpetas existentes"""
-        # Construir la ruta base para este mes/año
-        operation_folders = {'venta': 'ven', 'renta': 'ren'}
-        operation_folder = operation_folders.get(self.operation_type, 'ven')
-        base_path = self.project_root / 'data' / 'lam' / operation_folder / f"{month_abbrev}{year_short}"
-        
-        if not base_path.exists():
-            return 1
-        
-        # Buscar carpetas numéricas existentes
-        existing_scripts = []
-        for item in base_path.iterdir():
-            if item.is_dir() and item.name.isdigit():
-                existing_scripts.append(int(item.name))
-        
-        return max(existing_scripts) + 1 if existing_scripts else 1
     
     def setup_logging(self):
         """Configurar sistema de logging profesional"""
