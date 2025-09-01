@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Enhanced Scraps Registry Manager - PropertyScraper Dell710
-Sistema de registro y control de todos los scraps programados basado en Lista de URLs.csv
+Sistema de registro y control de todos los scraps programados basado en los
+archivos CSV individuales ubicados en el directorio ``URLs/``
 """
 
 import csv
@@ -17,7 +18,7 @@ from url_utils import extract_url_column
 class EnhancedScrapsRegistry:
     """
     Gestor del registro completo de scraps con seguimiento de estado
-    Adaptado para trabajar con Lista de URLs.csv
+    Adaptado para trabajar con los CSV almacenados en ``URLs/``
     """
     
     def __init__(self):
@@ -26,8 +27,8 @@ class EnhancedScrapsRegistry:
         self.progress_file = self.project_root / 'data' / 'scraps_progress.json'
         self.setup_logging()
         
-        # Cargar URLs desde el archivo CSV central ubicado en config/
-        self.csv_urls_file = self.project_root / 'config' / 'Lista de URLs.csv'
+        # Directorio que contiene los archivos de URLs individuales
+        self.csv_urls_dir = self.project_root / 'URLs'
         self.urls_registry = self.load_urls_from_csv()
         
         # Mapeo de sitios web
@@ -48,54 +49,59 @@ class EnhancedScrapsRegistry:
             self.initialize_registry()
     
     def load_urls_from_csv(self) -> List[Dict]:
-        """Cargar todas las URLs desde el archivo CSV"""
-        urls_list = []
-        
-        if not self.csv_urls_file.exists():
-            self.logger.warning(f"Archivo CSV no encontrado: {self.csv_urls_file}")
-            return urls_list
-        
-        try:
-            with open(self.csv_urls_file, 'r', encoding='utf-8-sig') as f:
-                reader = csv.DictReader(
-                    row for row in f if not row.lstrip().startswith('#')
-                )
+        """Cargar todas las URLs desde los archivos CSV del directorio URLs/"""
+        urls_list: List[Dict] = []
 
-                for idx, row in enumerate(reader, 1):
-                    # Normalizar nombres de columnas
-                    pagina_web = row.get('PaginaWeb', '').strip()
-                    estado = row.get('Estado', '').strip()
-                    ciudad = row.get('Ciudad', '').strip()
-                    operacion = row.get('Operación', row.get('Operacion', '')).strip()
-                    producto = row.get('ProductoPaginaWeb', '').strip()
-                    url = extract_url_column(row)
+        if not self.csv_urls_dir.exists():
+            self.logger.warning(f"Directorio de URLs no encontrado: {self.csv_urls_dir}")
+            return urls_list
 
-                    if url and pagina_web:
-                        # Crear ID único para cada URL
-                        url_id = f"{pagina_web.lower()}_{estado.lower()}_{ciudad.lower().replace(' ', '_')}_{operacion.lower()}_{producto.lower().replace(' ', '_')}"
-                        url_id = url_id.replace('/', '_').replace('-', '_').replace('ñ', 'n').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
-                        
-                        url_data = {
-                            'id': url_id,
-                            'website': pagina_web,
-                            'estado': estado,
-                            'ciudad': ciudad,
-                            'operacion': operacion,
-                            'producto': producto,
-                            'url': url,
-                            'prioridad': self.get_website_priority(pagina_web),
-                            'intervalo_dias': self.get_interval_days(pagina_web),
-                            'activo': True,
-                            'csv_row': idx
-                        }
-                        urls_list.append(url_data)
-            
-            self.logger.info(f"Cargadas {len(urls_list)} URLs desde {self.csv_urls_file}")
+        csv_files = list(self.csv_urls_dir.glob('*.csv'))
+        if not csv_files:
+            self.logger.warning(f"No se encontraron archivos CSV en {self.csv_urls_dir}")
             return urls_list
-            
-        except Exception as e:
-            self.logger.error(f"Error cargando URLs desde CSV: {e}")
-            return urls_list
+
+        for csv_file in csv_files:
+            try:
+                with open(csv_file, 'r', encoding='utf-8-sig') as f:
+                    reader = csv.DictReader(
+                        row for row in f if not row.lstrip().startswith('#')
+                    )
+
+                    for idx, row in enumerate(reader, 1):
+                        # Normalizar nombres de columnas
+                        pagina_web = row.get('PaginaWeb', '').strip()
+                        ciudad = row.get('Ciudad', '').strip()
+                        operacion = row.get('Operacion', row.get('Operación', '')).strip()
+                        producto = row.get('ProductoPaginaWeb', '').strip()
+                        url = extract_url_column(row)
+
+                        if url and pagina_web:
+                            # Crear ID único para cada URL
+                            url_id = f"{pagina_web.lower()}_{ciudad.lower().replace(' ', '_')}_{operacion.lower()}_{producto.lower().replace(' ', '_')}"
+                            url_id = url_id.replace('/', '_').replace('-', '_').replace('ñ', 'n').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+
+                            url_data = {
+                                'id': url_id,
+                                'website': pagina_web,
+                                'ciudad': ciudad,
+                                'operacion': operacion,
+                                'producto': producto,
+                                'url': url,
+                                'prioridad': self.get_website_priority(pagina_web),
+                                'intervalo_dias': self.get_interval_days(pagina_web),
+                                'activo': True,
+                                'csv_row': idx,
+                                'csv_file': csv_file.name
+                            }
+                            urls_list.append(url_data)
+            except Exception as e:
+                self.logger.error(f"Error cargando URLs desde {csv_file}: {e}")
+
+        self.logger.info(
+            f"Cargadas {len(urls_list)} URLs desde {len(csv_files)} archivos en {self.csv_urls_dir}"
+        )
+        return urls_list
     
     def get_website_priority(self, website: str) -> int:
         """Obtener prioridad según el sitio web"""
@@ -139,7 +145,7 @@ class EnhancedScrapsRegistry:
     def initialize_registry(self):
         """Inicializar el registro CSV con todas las URLs"""
         headers = [
-            'id', 'website', 'estado', 'ciudad', 'operacion', 'producto', 'url',
+            'id', 'website', 'ciudad', 'operacion', 'producto', 'url',
             'prioridad', 'intervalo_dias', 'activo', 'ultima_ejecucion',
             'proxima_ejecucion', 'total_ejecuciones', 'ejecuciones_exitosas',
             'ejecuciones_fallidas', 'ultimo_estado', 'registros_extraidos',
@@ -156,7 +162,6 @@ class EnhancedScrapsRegistry:
                     row = [
                         url_data['id'],
                         url_data['website'],
-                        url_data['estado'],
                         url_data['ciudad'],
                         url_data['operacion'],
                         url_data['producto'],
@@ -407,14 +412,13 @@ class EnhancedScrapsRegistry:
     
     def get_output_path(self, scrap_data: Dict) -> Path:
         """Obtener la ruta de salida para un scrap específico"""
-        website = scrap_data['website'].lower()
-        estado = scrap_data['estado'].lower()
-        ciudad = scrap_data['ciudad'].lower().replace(' ', '_')
-        operacion = scrap_data['operacion'].lower()
-        producto = scrap_data['producto'].lower().replace(' ', '_')
-        
+        website = scrap_data.get('website', '').lower()
+        ciudad = scrap_data.get('ciudad', scrap_data.get('city', '')).lower().replace(' ', '_')
+        operacion = scrap_data.get('operacion', scrap_data.get('operation', '')).lower()
+        producto = scrap_data.get('producto', scrap_data.get('product', '')).lower().replace(' ', '_')
+
         # Crear estructura de carpetas organizada
-        output_dir = self.project_root / 'data' / website / estado / ciudad / operacion
+        output_dir = self.project_root / 'data' / website / ciudad / operacion
         output_dir.mkdir(exist_ok=True, parents=True)
         
         # Nombre del archivo con timestamp
@@ -425,13 +429,12 @@ class EnhancedScrapsRegistry:
     
     def get_backup_path(self, scrap_data: Dict) -> str:
         """Obtener la ruta de backup en Google Drive"""
-        website = scrap_data['website']
-        estado = scrap_data['estado']
-        ciudad = scrap_data['ciudad'].replace(' ', '_')
-        operacion = scrap_data['operacion']
-        
+        website = scrap_data.get('website', '')
+        ciudad = scrap_data.get('ciudad', scrap_data.get('city', '')).replace(' ', '_')
+        operacion = scrap_data.get('operacion', scrap_data.get('operation', ''))
+
         # Estructura para Google Drive
-        return f"PropertyScraper/{website}/{estado}/{ciudad}/{operacion}/"
+        return f"PropertyScraper/{website}/{ciudad}/{operacion}/"
     
     def export_registry_report(self) -> str:
         """Exportar reporte completo del registry"""

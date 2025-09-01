@@ -2,7 +2,7 @@
 """
 Inmuebles24 Professional Scraper - PropertyScraper Dell710
 Scraper profesional optimizado para Dell T710 con capacidades de resilencia
-Adaptado para trabajar con Lista de URLs.csv
+Adaptado para trabajar con ``URLs/inm24_urls.csv``
 """
 
 import os
