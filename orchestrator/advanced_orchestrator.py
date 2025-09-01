@@ -2,7 +2,7 @@
 """
 Advanced Orchestrator - PropertyScraper Dell710
 Orquestador avanzado con lógica de flujo de trabajo según especificaciones
-Adaptado para trabajar con Lista de URLs.csv
+Adaptado para trabajar con los archivos CSV individuales ubicados en ``URLs/``
 """
 
 import os
@@ -187,13 +187,7 @@ class AdvancedOrchestrator:
             # Usar scrapers integrados
             website = scrap['website'].lower()
             url = scrap['url']
-            output_path = self.registry.get_output_path(
-                scrap['website'], 
-                scrap['state'], 
-                scrap['city'], 
-                scrap['operation'], 
-                scrap['product']
-            )
+            output_path = self.registry.get_output_path(scrap)
             
             # Crear directorio de salida
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -277,7 +271,7 @@ class AdvancedOrchestrator:
                 python_path, script_path,
                 "--headless",
                 f"--url={scrap['url']}",
-                f"--output={self.registry.get_output_path(scrap['website'], scrap['state'], scrap['city'], scrap['operation'], scrap['product'])}",
+                f"--output={self.registry.get_output_path(scrap)}",
                 "--pages=50"  # Límite por defecto
             ]
             
@@ -405,8 +399,7 @@ class AdvancedOrchestrator:
                             'city': row.get('Ciudad', '').strip(),
                             'operation': (row.get('Operación') or row.get('Operacion') or row.get('Operacin') or '').strip().lower(),
                             'product': row.get('ProductoPaginaWeb', '').strip(),
-                            'url': url,
-                            'state': row.get('Estado', '').strip() or 'desconocido'
+                            'url': url
                         }
                         tasks_by_site.setdefault(task['website'], []).append(task)
             except Exception as e:

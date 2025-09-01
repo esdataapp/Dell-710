@@ -4,7 +4,7 @@
 
 ## 🎯 Descripción General
 
-Sistema profesional de web scraping para bienes raíces optimizado para Dell PowerEdge T710, **completamente migrado con nomenclatura abreviada**, SeleniumBase unificado y más de 1000 URLs organizadas jerárquicamente en Lista de URLs.csv.
+Sistema profesional de web scraping para bienes raíces optimizado para Dell PowerEdge T710, **completamente migrado con nomenclatura abreviada**, SeleniumBase unificado y más de 1000 URLs organizadas en archivos CSV individuales dentro de ``URLs/``.
 
 ## 🆕 Migración Completa Realizada
 
@@ -19,17 +19,15 @@ Sistema profesional de web scraping para bienes raíces optimizado para Dell Pow
 - **Undetected Chrome**: UC mode para bypass automático
 
 ### ✅ Sistema CSV Dinámico Actualizado
-- **Lista de URLs.csv**: Base de datos maestra con jerarquía actualizada
-- **Estructura jerárquica**: PaginaWeb → Estado → Ciudad → Operacion → ProductoPaginaWeb → URL  
+- **URLs/**: Carpeta con archivos CSV por sitio
+- **Estructura unificada**: PaginaWeb → Ciudad → Operacion → ProductoPaginaWeb → URL
 - **Gestión automática**: Configuración centralizada sin URLs hardcodeadas
 
-## 📊 Estructura del CSV Actualizada
+## 📊 Estructura de los CSV
 
 ```csv
-PaginaWeb,Estado,Ciudad,Operacion,ProductoPaginaWeb,URL
-Inmuebles24,Jalisco,Zapopan,venta,Departamentos,https://...
-Casas_y_terrenos,Jalisco,Guadalajara,renta,Casas,https://...
-mitula,Jalisco,Zapopan,venta,Casa,https://...
+PaginaWeb,Ciudad,Operacion,ProductoPaginaWeb,URL
+casas_y_terrenos,Guadalajara,renta,Casas,https://...
 ```
 
 **Cambios en la nomenclatura:**
@@ -41,8 +39,8 @@ mitula,Jalisco,Zapopan,venta,Casa,https://...
 
 ```
 PropertyScraper-Dell710/
-├── config/
-│   └── Lista de URLs.csv                # 🔄 Base de datos con nomenclatura actualizada
+├── URLs/                               # CSVs por sitio
+├── config/                             
 ├── scrapers/                           # 🔄 Scrapers con nomenclatura abreviada
 │   ├── inm24.py                        # 🆕 inm24 general
 │   ├── inm24_det.py                    # 🆕 inm24 detallado
@@ -70,14 +68,14 @@ PropertyScraper-Dell710/
 
 ## 🚀 Instalación y Configuración Migrada
 
-### 1. Verificar Lista de URLs.csv
+### 1. Verificar archivos en URLs/
 ```bash
-# El archivo debe estar en PropertyScraper-Dell710/config/
-ls -la config/"Lista de URLs.csv"
+# Los archivos deben estar en PropertyScraper-Dell710/URLs/
+ls -la URLs/
 
 # Verificar estructura con nuevas columnas:
-# PaginaWeb, Estado, Ciudad, Operacion, ProductoPaginaWeb, URL
-head -5 config/"Lista de URLs.csv"
+# PaginaWeb, Ciudad, Operacion, ProductoPaginaWeb, URL
+head -5 URLs/cyt_urls.csv
 ```
 
 ### 2. Instalar SeleniumBase Unificado
@@ -189,21 +187,20 @@ registry.update_scrap_status(
 ## 🎯 Flujo de Trabajo del Orquestador
 
 ### 1. Fase de Planificación
-- Cargar URLs desde `Lista de URLs.csv`
+- Cargar URLs desde los archivos en `URLs/`
 - Generar scraps con IDs únicos
 - Establecer prioridades por website
 
 ### 2. Fase de Ejecución
 ```
 Para cada WEBSITE (máximo 4 simultáneos):
-  └── Para cada ESTADO:
-      └── Para cada CIUDAD:
-          └── Para cada OPERACIÓN:
-              └── Para cada PRODUCTO:
-                  └── Ejecutar scraper específico
-                  └── Guardar en estructura jerárquica
-                  └── Actualizar registry
-                  └── Programar backup a Google Drive
+  └── Para cada CIUDAD:
+      └── Para cada OPERACIÓN:
+          └── Para cada PRODUCTO:
+              └── Ejecutar scraper específico
+              └── Guardar en estructura jerárquica
+              └── Actualizar registry
+              └── Programar backup a Google Drive
 ```
 
 ### 3. Fase de Finalización
@@ -317,14 +314,14 @@ grep -r "chromium_arg.*no-sandbox" scrapers/
 # chromium_arg="--no-sandbox"
 ```
 
-### Error: Lista de URLs.csv formato incorrecto
+### Error: CSV en URLs/ formato incorrecto
 ```bash
 # Verificar columnas (sin tilde en Operacion)
-head -1 config/"Lista de URLs.csv"
-# Debe mostrar: PaginaWeb,Estado,Ciudad,Operacion,ProductoPaginaWeb,URL
+head -1 URLs/cyt_urls.csv
+# Debe mostrar: PaginaWeb,Ciudad,Operacion,ProductoPaginaWeb,URL
 
 # Verificar operaciones en minúsculas
-grep -i "Venta\|Renta" config/"Lista de URLs.csv"
+grep -i "Venta\|Renta" URLs/cyt_urls.csv
 # Cambiar a: venta, renta, venta-d, venta-r
 ```
 
@@ -390,14 +387,14 @@ for scraper in scrapers:
 1. **8 Scrapers migrados** - Nomenclatura abreviada implementada
 2. **SeleniumBase unificado** - Configuración estándar y compatible
 3. **Error 'no_sandbox' resuelto** - Migración a chromium_arg exitosa
-4. **Lista de URLs actualizada** - Nomenclatura y operaciones estandarizadas
+4. **Archivos de URLs actualizados** - Nomenclatura y operaciones estandarizadas
 5. **Estructura de datos optimizada** - Jerarquía simplificada
 6. **Orquestadores actualizados** - Referencias a nuevos nombres
 7. **Sistema de logs mejorado** - Nombres de archivo consistentes
 8. **Numeración automática** - Scripts numerados automáticamente
 
 ### Agregar Nuevas URLs al Sistema Migrado
-1. Editar `config/Lista de URLs.csv`
+1. Agregar o editar archivos en `URLs/`
 2. Usar nomenclatura estandarizada:
    - **PaginaWeb**: Nombre del sitio (case-sensitive)
    - **Operacion**: venta, renta, venta-d, venta-r (minúsculas)
