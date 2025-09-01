@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Setup Inicial - PropertyScraper Dell710
-Script para configurar el sistema integrado con config/Lista de URLs.csv
+Script para configurar el sistema validando los archivos CSV en ``URLs/``
 """
 
 import os
@@ -30,56 +30,47 @@ def setup_logging():
     
     return logging.getLogger(__name__)
 
-def check_csv_file():
-    """Verificar que config/Lista de URLs.csv existe y tiene la estructura correcta"""
+def check_urls_files():
+    """Verificar que los CSV en URLs/ existen y tienen la estructura correcta"""
     logger = logging.getLogger(__name__)
-    logger.info("📄 Verificando config/Lista de URLs.csv...")
+    logger.info("📄 Verificando archivos CSV en URLs/...")
 
-    csv_path = Path('config') / 'Lista de URLs.csv'
-    
-    if not csv_path.exists():
-        logger.error("❌ config/Lista de URLs.csv no encontrada")
-        logger.info("📋 Crear archivo Lista de URLs.csv con las columnas:")
-        logger.info("   PaginaWeb,Estado,Ciudad,Operación,ProductoPaginaWeb,URL")
+    urls_dir = Path('URLs')
+    if not urls_dir.exists():
+        logger.error("❌ Directorio URLs/ no encontrado")
         return False
-    
-    try:
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            rows = list(reader)
-        
-        if not rows:
-            logger.error("❌ config/Lista de URLs.csv está vacía")
-            return False
-        
-        # Verificar columnas requeridas
-        required_columns = ['PaginaWeb', 'Estado', 'Ciudad', 'Operación', 'ProductoPaginaWeb', 'URL']
-        available_columns = list(rows[0].keys())
-        missing_columns = [col for col in required_columns if col not in available_columns]
-        
-        if missing_columns:
-            logger.error(f"❌ Columnas faltantes en CSV: {missing_columns}")
-            return False
-        
-        logger.info(f"✅ CSV válido con {len(rows)} URLs")
-        
-        # Estadísticas por website
-        websites = {}
-        for row in rows:
-            website = row['PaginaWeb']
-            if website not in websites:
-                websites[website] = 0
-            websites[website] += 1
-        
-        logger.info("📊 URLs por website:")
-        for website, count in websites.items():
-            logger.info(f"   {website}: {count} URLs")
-        
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Error leyendo CSV: {e}")
+
+    csv_files = list(urls_dir.glob('*.csv'))
+    if not csv_files:
+        logger.error("❌ No se encontraron archivos CSV en URLs/")
         return False
+
+    required_columns = ['PaginaWeb', 'Ciudad', 'Operacion', 'ProductoPaginaWeb', 'URL']
+    all_valid = True
+
+    for csv_file in csv_files:
+        try:
+            with open(csv_file, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+
+            if not rows:
+                logger.warning(f"⚠️ {csv_file.name} está vacío")
+                continue
+
+            available = [c.replace('Operación', 'Operacion') for c in rows[0].keys()]
+            missing = [col for col in required_columns if col not in available]
+            if missing:
+                logger.error(f"❌ Columnas faltantes en {csv_file.name}: {missing}")
+                all_valid = False
+                continue
+
+            logger.info(f"✅ {csv_file.name}: {len(rows)} URLs")
+        except Exception as e:
+            logger.error(f"❌ Error leyendo {csv_file.name}: {e}")
+            all_valid = False
+
+    return all_valid
 
 def create_directory_structure():
     """Crear estructura de directorios necesaria"""
@@ -125,7 +116,7 @@ def initialize_registry():
         registry = EnhancedScrapsRegistry()
         
         # Cargar URLs y generar scraps
-        logger.info("📥 Cargando URLs desde CSV...")
+        logger.info("📥 Cargando URLs desde archivos en URLs/...")
         urls = registry.load_urls_from_csv()
         logger.info(f"✅ {len(urls)} URLs cargadas")
         
@@ -259,7 +250,7 @@ def setup_complete_check():
     logger.info("🔍 Verificación final del setup...")
     
     checks = [
-        ("config/Lista de URLs.csv", check_csv_file()),
+        ("Archivos CSV en URLs/", check_urls_files()),
         ("Dependencias Python", check_dependencies()),
         ("Scrapers", check_scrapers()),
         ("Registry", initialize_registry())

@@ -2,7 +2,7 @@
 """
 Casas y Terrenos Professional Scraper - PropertyScraper Dell710
 Scraper profesional optimizado para Dell T710 con capacidades de resilencia
-Adaptado para trabajar con Lista de URLs.csv
+Adaptado para trabajar con ``URLs/cyt_urls.csv``
 """
 
 import os

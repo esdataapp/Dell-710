@@ -57,9 +57,9 @@ PropertyScraper-Dell710/
 │   ├── gdrive_backup_manager.py
 │   ├── enhanced_scraps_registry.py
 │   └── url_utils.py
+├── URLs/                    # Archivos de URLs por sitio (cyt_urls.csv, mit_urls.csv, ...)
 ├── config/                   # Configuraciones del sistema
 │   ├── dell_t710_config.yaml
-│   ├── Lista de URLs.csv    # Configuración central de URLs con jerarquía
 │   └── ssh_config.json
 ├── monitoring/               # Sistema de monitoreo
 │   └── performance_monitor.py
@@ -138,15 +138,14 @@ data/{scraper_abrev}/{operation_abrev}/{mesAño}/{script}/
 - **venta-d**: Venta desarrollos (solo Inmuebles24)
 - **venta-r**: Venta remates (solo Inmuebles24)
 
-### Lista de URLs.csv
+### Archivos de URLs
 
-Archivo central en `config/Lista de URLs.csv` con las columnas:
+Los archivos CSV en `URLs/` son la única fuente de URLs del sistema y
+comparten las siguientes columnas:
 
 ```csv
-PaginaWeb,Estado,Ciudad,Operacion,ProductoPaginaWeb,URL
-Inmuebles24,Jalisco,Zapopan,venta,Departamentos,https://...
-Casas_y_terrenos,Jalisco,Guadalajara,renta,Casas,https://...
-mitula,Jalisco,Zapopan,venta,Casa,https://...
+PaginaWeb,Ciudad,Operacion,ProductoPaginaWeb,URL
+casas_y_terrenos,Guadalajara,Rentar,Edificios,https://...
 ```
 
 Notas de nomenclatura:
@@ -246,7 +245,7 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
 - **8 Scrapers**: Todos funcionales con nueva nomenclatura
 - **SeleniumBase**: Configuración estandarizada y compatible
 - **Estructura de datos**: Optimizada con abreviaciones
-- **Lista de URLs.csv**: Única fuente de URLs del sistema (los CSV individuales en `URLs/` son legado).
+- **URLs/**: Carpeta con los CSV individuales; única fuente de URLs del sistema.
 
 ---
 
