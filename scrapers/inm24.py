@@ -13,6 +13,7 @@ import csv
 import logging
 import pickle
 import random
+import calendar
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -488,8 +489,9 @@ class Inmuebles24ProfessionalScraper:
         self.logger.info(f"💾 Resultados guardados en: {csv_path}")
 
         # Guardar URLs recolectadas con nueva nomenclatura
-        month_abbrev = self.month_year[:3]
-        year_short = self.month_year[-2:]
+        current = datetime.now()
+        month_abbrev = calendar.month_abbr[current.month]
+        year_short = current.strftime("%y")
         city_code = city_cap[:3].upper()
         op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
         op_code = op_code_map.get((operation or '').lower(), operation_cap[:3].upper())
