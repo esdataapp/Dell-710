@@ -38,7 +38,9 @@ Se han creado **6 nuevos scrapers profesionales** siguiendo los mismos patrones 
 - **Performance Analytics**: Tiempo promedio por página/propiedad
 
 ### ✅ Organización de Datos
-- **Hierarchical Storage**: `data/[site]/[operation]/[month]/[phase]/`
+- **Hierarchical Storage**: `data/[site]/[operation]/[MonYYYY]/[run]/[phase]/`
+  - `{Mon}`: abreviatura de mes en inglés
+  - `{run}`: `01` o `02` según la ejecución del mes
 - **CSV + Metadata**: Archivos de datos con información de ejecución
 - **URL Management**: Para scrapers de dos fases con archivos de URLs
 - **Timestamp Tracking**: Trazabilidad completa de ejecuciones

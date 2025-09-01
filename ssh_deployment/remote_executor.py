@@ -299,13 +299,6 @@ class DellT710SSHExecutor:
             else:
                 self.logger.warning("⚠️  Problemas en verificación de dependencias")
             
-            # Crear estructura de datos
-            self.logger.info("🏗️  Creando estructura de datos...")
-            exit_code, stdout, stderr = self.execute_command(
-                f"cd {remote_root} && {python_env} utils/create_data_structure.py",
-                timeout=300
-            )
-            
             self.logger.info("🎉 Despliegue completado exitosamente")
             return True
             

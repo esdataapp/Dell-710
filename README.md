@@ -52,7 +52,6 @@ PropertyScraper-Dell710/
 │   ├── bimonthly_scheduler.py
 │   └── concurrent_manager.py
 ├── utils/                    # Utilidades y herramientas
-│   ├── create_data_structure.py
 │   ├── checkpoint_recovery.py
 │   ├── gdrive_backup_manager.py
 │   ├── enhanced_scraps_registry.py
@@ -119,8 +118,10 @@ PropertyScraper-Dell710/
 
 ### Nueva Estructura Optimizada
 ```
-data/{scraper_abrev}/{operation_abrev}/{mesAño}/{script}/
+data/{scraper_abrev}/{operation_abrev}/{MonYYYY}/{run}/
 ```
+Donde `{Mon}` es la abreviatura en inglés del mes (Jan, Feb, Mar, ...),
+`{YYYY}` el año y `{run}` el número de ejecución (`01` o `02`).
 
 ### Nomenclatura de Scrapers
 - **inm24**: Inmuebles24 general
@@ -156,17 +157,23 @@ Notas de nomenclatura:
 - Operaciones en minúsculas: `venta`, `renta`, `venta-d`, `venta-r`.
 - `venta-d` y `venta-r` aplican solo para Inmuebles24 (desarrollos y remates).
 
+Cada ejecución genera:
+
+- CSV principal con los resultados.
+- `metadata_run_XX.json` con parámetros y métricas.
+- `monitor_run_XX.log` con el registro de monitoreo.
+
 ### Ejemplo de Ruta Actualizada
 ```
-data/inm24/venta/ago2025/1/
-├── inm24_venta_ago_2025_script_1.csv
-├── metadata_script_1.json
-└── execution_log_script_1.log
+data/inm24/venta/Aug2025/01/
+├── inm24_venta_Aug2025_run_01.csv
+├── metadata_run_01.json
+└── monitor_run_01.log
 ```
 
 ### Programación de Ejecuciones
-- **1ra Ejecución**: Día 1-2 de cada mes
-- **2da Ejecución**: Día 15-16 de cada mes
+- **Run 01**: Día 1-2 de cada mes
+- **Run 02**: Día 15-16 de cada mes
 - **Duración Estimada**: 4-8 horas por sitio web completo
 - **Total Propiedades**: 15,000+ por ejecución
 
@@ -207,12 +214,7 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
    pip install -r dev-requirements.txt
    ```
 
-2. **Crear estructura de datos**:
-   ```bash
-   python utils/create_data_structure.py
-   ```
-
-3. **Ejecutar scraper individual**:
+2. **Ejecutar scraper individual**:
    ```bash
    # Inmuebles24 general
    python scrapers/inm24.py --headless --pages=100
@@ -224,12 +226,12 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
    python scrapers/lam.py --headless --pages=75
    ```
 
-4. **Ejecutar orquestación completa**:
+3. **Ejecutar orquestación completa**:
    ```bash
    python orchestrator/advanced_orchestrator.py
    ```
 
-5. **Programar ejecución bi-mensual**:
+4. **Programar ejecución bi-mensual**:
    ```bash
    python orchestrator/bimonthly_scheduler.py
    ```
