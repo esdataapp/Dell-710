@@ -234,6 +234,14 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
    python orchestrator/bimonthly_scheduler.py
    ```
 
+6. **Revisar estado de los scraps**:
+   ```bash
+   python monitoring/scrap_status.py --pagina-web Mit --ciudad Gdl
+   ```
+   Muestra ejecuciones completadas (runs `01`/`02`), tareas en curso según
+   `data/orchestrator_state.json` y tareas en cola. Se puede filtrar por
+   `PaginaWeb` y `Ciudad` y ordenar la salida.
+
 ## 🏆 Resultados Probados
 
 ### Test exitoso - Inmuebles24 (`inm24.py`)
