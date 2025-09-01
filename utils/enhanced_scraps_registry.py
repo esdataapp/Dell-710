@@ -20,14 +20,16 @@ class EnhancedScrapsRegistry:
     Adaptado para trabajar con Lista de URLs.csv
     """
     
-    def __init__(self):
+    def __init__(self, csv_urls_file: Optional[Path] = None):
         self.project_root = Path(__file__).parent.parent
         self.registry_file = self.project_root / 'data' / 'scraps_registry.csv'
         self.progress_file = self.project_root / 'data' / 'scraps_progress.json'
         self.setup_logging()
-        
-        # Cargar URLs desde el archivo CSV central ubicado en config/
-        self.csv_urls_file = self.project_root / 'config' / 'Lista de URLs.csv'
+
+        # Ruta al CSV maestro de URLs
+        self.csv_urls_file = (
+            csv_urls_file or self.project_root / 'config' / 'Lista de URLs.csv'
+        )
         self.urls_registry = self.load_urls_from_csv()
         
         # Mapeo de sitios web

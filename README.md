@@ -246,7 +246,7 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
 - **8 Scrapers**: Todos funcionales con nueva nomenclatura
 - **SeleniumBase**: Configuración estandarizada y compatible
 - **Estructura de datos**: Optimizada con abreviaciones
-- **Lista de URLs.csv**: Única fuente de URLs del sistema (los CSV individuales en `URLs/` son legado).
+- **Lista de URLs.csv**: Única fuente de URLs del sistema.
 
 ---
 

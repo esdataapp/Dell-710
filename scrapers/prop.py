@@ -643,9 +643,12 @@ def main():
     if args.url:
         urls = [args.url]
     else:
-        default_csv = Path(__file__).parent.parent / 'URLs' / 'prop_urls.csv'
+        default_csv = Path(__file__).parent.parent / 'config' / 'Lista de URLs.csv'
         csv_path = args.urls_file or default_csv
-        url_entries = load_urls_from_csv(csv_path)
+        url_entries = [
+            row for row in load_urls_from_csv(csv_path)
+            if row.get('PaginaWeb', '').strip().lower().replace(' ', '_') == 'propiedades'
+        ]
         urls = [extract_url_column(row) for row in url_entries]
 
     success = True
@@ -669,9 +672,12 @@ def run_scraper(url: str = None, max_pages: int = None,
     if url:
         urls = [url]
     else:
-        default_csv = Path(__file__).parent.parent / 'URLs' / 'prop_urls.csv'
+        default_csv = Path(__file__).parent.parent / 'config' / 'Lista de URLs.csv'
         csv_path = urls_file or default_csv
-        url_entries = load_urls_from_csv(csv_path)
+        url_entries = [
+            row for row in load_urls_from_csv(csv_path)
+            if row.get('PaginaWeb', '').strip().lower().replace(' ', '_') == 'propiedades'
+        ]
         urls = [extract_url_column(row) for row in url_entries]
 
     results: List[Dict] = []
