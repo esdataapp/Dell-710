@@ -6,6 +6,7 @@ Crea automáticamente la estructura completa de carpetas para todos los sitios w
 
 import os
 import datetime
+import calendar
 from pathlib import Path
 
 def create_data_structure():
@@ -35,12 +36,8 @@ def create_data_structure():
         month_end = 12
         
         for month in range(month_start, month_end + 1):
-            month_names = {
-                1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
-                5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
-                9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
-            }
-            months.append(f"{month_names[month]} {year}")
+            month_name = calendar.month_name[month]
+            months.append(f"{month_name} {year}")
     
     # Ejecuciones por mes
     executions = ['1er_script_del_mes', '2do_script_del_mes']

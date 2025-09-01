@@ -11,6 +11,7 @@ import time
 import csv
 import logging
 import pickle
+import calendar
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -549,8 +550,9 @@ class LamudiProfessionalScraper:
                 writer.writerows(self.properties_data)
 
         # Nueva nomenclatura para archivo de URLs
-        month_abbrev = self.month_year[:3]
-        year_short = self.month_year[-2:]
+        current = datetime.now()
+        month_abbrev = calendar.month_abbr[current.month]
+        year_short = current.strftime("%y")
         city_code = ciudad_cap[:3].upper()
         op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
         op_code = op_code_map.get((operation or '').lower(), operacion_cap[:3].upper())

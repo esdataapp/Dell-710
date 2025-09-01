@@ -47,6 +47,7 @@ import time
 import csv
 import logging
 import pickle
+import calendar
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -476,8 +477,9 @@ class PropiedadesProfessionalScraper:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
         run_str = f"{self.run_number:02d}"
-        month_abbrev = self.month_year[:3]
-        year_short = self.month_year[-2:]
+        current = datetime.now()
+        month_abbrev = calendar.month_abbr[current.month]
+        year_short = current.strftime("%y")
 
         # Archivo CSV principal con nueva nomenclatura
         csv_filename = f"prop_{month_abbrev}{year_short}_{run_str}.csv"
