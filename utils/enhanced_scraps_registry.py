@@ -6,12 +6,11 @@ archivos CSV individuales ubicados en el directorio ``URLs/``
 """
 
 import csv
-import json
 import os
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-import logging
+from typing import Dict, List, Optional
 
 from url_utils import extract_url_column
 
@@ -24,29 +23,130 @@ class EnhancedScrapsRegistry:
     def __init__(self):
         self.project_root = Path(__file__).parent.parent
         self.registry_file = self.project_root / 'data' / 'scraps_registry.csv'
-        self.progress_file = self.project_root / 'data' / 'scraps_progress.json'
         self.setup_logging()
-        
+
         # Directorio que contiene los archivos de URLs individuales
         self.csv_urls_dir = self.project_root / 'URLs'
+
+        # Migrar datos del registro antiguo si existe
+        self.migrate_registry_to_csv_files()
+
+        # Cargar las URLs con información de progreso
         self.urls_registry = self.load_urls_from_csv()
-        
+
         # Mapeo de sitios web
         self.websites = {
             1: "Inmuebles24",
-            2: "Casas_y_terrenos", 
+            2: "Casas_y_terrenos",
             3: "lamudi",
             4: "mitula",
             5: "propiedades",
             6: "trovit"
         }
-        
-        # Crear directorio de datos si no existe
-        self.registry_file.parent.mkdir(exist_ok=True, parents=True)
-        
-        # Inicializar registry si no existe
+
+    # Columnas de progreso que se almacenarán en cada CSV de URLs
+    progress_columns = ['Status', 'LastRun', 'NextRun', 'ScrapOfMonth', 'Records']
+
+    def ensure_csv_progress_columns(self, csv_path: Path) -> None:
+        """Asegurar que el archivo CSV contenga las columnas de progreso"""
+        try:
+            with open(csv_path, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(row for row in f if not row.lstrip().startswith('#'))
+                fieldnames = reader.fieldnames or []
+                # Si todas las columnas existen, no hacer nada
+                if all(col in fieldnames for col in self.progress_columns):
+                    return
+
+                rows = list(reader)
+
+            # Añadir columnas faltantes con valores por defecto
+            new_fieldnames = fieldnames + [col for col in self.progress_columns if col not in fieldnames]
+            for row in rows:
+                for col in self.progress_columns:
+                    row.setdefault(col, 'False' if col == 'ScrapOfMonth' else '')
+
+            with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=new_fieldnames)
+                writer.writeheader()
+                writer.writerows(rows)
+
+        except Exception as e:
+            self.logger.error(f"Error asegurando columnas en {csv_path}: {e}")
+
+    def migrate_registry_to_csv_files(self) -> None:
+        """Migrar datos del registro central a los archivos CSV individuales"""
         if not self.registry_file.exists():
-            self.initialize_registry()
+            return
+
+        self.logger.info("Migrando datos desde scraps_registry.csv a archivos de URLs")
+        try:
+            with open(self.registry_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                registry_rows = list(reader)
+
+            for reg_row in registry_rows:
+                website = reg_row.get('website') or reg_row.get('PaginaWeb')
+                if not website:
+                    continue
+
+                # Mapear website a archivo CSV
+                file_map = {
+                    'Inmuebles24': 'inm24_urls.csv',
+                    'Casas_y_terrenos': 'cyt_urls.csv',
+                    'lamudi': 'lam_urls.csv',
+                    'mitula': 'mit_urls.csv',
+                    'propiedades': 'prop_urls.csv',
+                    'trovit': 'tro_urls.csv'
+                }
+                csv_filename = file_map.get(website)
+                if not csv_filename:
+                    continue
+
+                csv_path = self.csv_urls_dir / csv_filename
+                if not csv_path.exists():
+                    continue
+
+                self.ensure_csv_progress_columns(csv_path)
+
+                try:
+                    with open(csv_path, 'r', encoding='utf-8-sig') as f:
+                        reader = csv.DictReader(row for row in f if not row.lstrip().startswith('#'))
+                        fieldnames = reader.fieldnames or []
+                        rows = list(reader)
+
+                    # Buscar fila por URL
+                    match_idx = None
+                    for idx, row in enumerate(rows):
+                        if row.get('URL', '').strip() == reg_row.get('url', '').strip():
+                            match_idx = idx
+                            break
+
+                    if match_idx is not None:
+                        row = rows[match_idx]
+                        row['Status'] = reg_row.get('ultimo_estado', '')
+                        row['LastRun'] = reg_row.get('ultima_ejecucion', '')
+                        row['NextRun'] = reg_row.get('proxima_ejecucion', '')
+                        # Guardar mes de la última ejecución como ScrapOfMonth
+                        last_run = reg_row.get('ultima_ejecucion', '')
+                        row['ScrapOfMonth'] = last_run[:7] if last_run else ''
+                        row['Records'] = reg_row.get('registros_extraidos', '')
+                        rows[match_idx] = row
+
+                        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+                            writer = csv.DictWriter(f, fieldnames=fieldnames)
+                            writer.writeheader()
+                            writer.writerows(rows)
+                except Exception as e:
+                    self.logger.error(f"Error migrando datos a {csv_path}: {e}")
+
+        except Exception as e:
+            self.logger.error(f"Error leyendo scraps_registry.csv: {e}")
+        finally:
+            try:
+                os.remove(self.registry_file)
+                self.logger.info("Archivo scraps_registry.csv eliminado tras migración")
+            except OSError:
+                pass
     
     def load_urls_from_csv(self) -> List[Dict]:
         """Cargar todas las URLs desde los archivos CSV del directorio URLs/"""
@@ -63,13 +163,15 @@ class EnhancedScrapsRegistry:
 
         for csv_file in csv_files:
             try:
+                # Asegurar que existan las columnas de progreso
+                self.ensure_csv_progress_columns(csv_file)
+
                 with open(csv_file, 'r', encoding='utf-8-sig') as f:
                     reader = csv.DictReader(
                         row for row in f if not row.lstrip().startswith('#')
                     )
 
                     for idx, row in enumerate(reader, 1):
-                        # Normalizar nombres de columnas
                         pagina_web = row.get('PaginaWeb', '').strip()
                         ciudad = row.get('Ciudad', '').strip()
                         operacion = row.get('Operacion', row.get('Operación', '')).strip()
@@ -77,9 +179,16 @@ class EnhancedScrapsRegistry:
                         url = extract_url_column(row)
 
                         if url and pagina_web:
-                            # Crear ID único para cada URL
                             url_id = f"{pagina_web.lower()}_{ciudad.lower().replace(' ', '_')}_{operacion.lower()}_{producto.lower().replace(' ', '_')}"
-                            url_id = url_id.replace('/', '_').replace('-', '_').replace('ñ', 'n').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+                            url_id = (
+                                url_id.replace('/', '_')
+                                .replace('-', '_')
+                                .replace('ñ', 'n')
+                                .replace('é', 'e')
+                                .replace('í', 'i')
+                                .replace('ó', 'o')
+                                .replace('ú', 'u')
+                            )
 
                             url_data = {
                                 'id': url_id,
@@ -92,7 +201,12 @@ class EnhancedScrapsRegistry:
                                 'intervalo_dias': self.get_interval_days(pagina_web),
                                 'activo': True,
                                 'csv_row': idx,
-                                'csv_file': csv_file.name
+                                'csv_file': csv_file.name,
+                                'status': row.get('Status', ''),
+                                'last_run': row.get('LastRun', ''),
+                                'next_run': row.get('NextRun', ''),
+                                'scrap_of_month': row.get('ScrapOfMonth', ''),
+                                'records': row.get('Records', '')
                             }
                             urls_list.append(url_data)
             except Exception as e:
@@ -143,90 +257,38 @@ class EnhancedScrapsRegistry:
         self.logger = logging.getLogger('EnhancedScrapsRegistry')
     
     def initialize_registry(self):
-        """Inicializar el registro CSV con todas las URLs"""
-        headers = [
-            'id', 'website', 'ciudad', 'operacion', 'producto', 'url',
-            'prioridad', 'intervalo_dias', 'activo', 'ultima_ejecucion',
-            'proxima_ejecucion', 'total_ejecuciones', 'ejecuciones_exitosas',
-            'ejecuciones_fallidas', 'ultimo_estado', 'registros_extraidos',
-            'tiempo_promedio_minutos', 'observaciones'
-        ]
-        
-        try:
-            with open(self.registry_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(headers)
-                
-                # Escribir todas las URLs del CSV
-                for url_data in self.urls_registry:
-                    row = [
-                        url_data['id'],
-                        url_data['website'],
-                        url_data['ciudad'],
-                        url_data['operacion'],
-                        url_data['producto'],
-                        url_data['url'],
-                        url_data['prioridad'],
-                        url_data['intervalo_dias'],
-                        url_data['activo'],
-                        '',  # ultima_ejecucion
-                        '',  # proxima_ejecucion
-                        0,   # total_ejecuciones
-                        0,   # ejecuciones_exitosas
-                        0,   # ejecuciones_fallidas
-                        'Pendiente',  # ultimo_estado
-                        0,   # registros_extraidos
-                        0,   # tiempo_promedio_minutos
-                        ''   # observaciones
-                    ]
-                    writer.writerow(row)
-            
-            self.logger.info(f"Registry inicializado con {len(self.urls_registry)} URLs")
-            
-        except Exception as e:
-            self.logger.error(f"Error inicializando registry: {e}")
+        """Método mantenido por compatibilidad (sin uso)"""
+        self.logger.debug("initialize_registry ya no es necesario")
     
     def get_pending_scraps(self, website: str = None) -> List[Dict]:
         """Obtener scraps pendientes de ejecución"""
         now = datetime.now()
-        pending_scraps = []
-        
+        pending_scraps: List[Dict] = []
+
         try:
-            if not self.registry_file.exists():
-                self.initialize_registry()
-            
-            with open(self.registry_file, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                
-                for row in reader:
-                    if row['activo'].lower() == 'true':
-                        # Filtrar por website si se especifica
-                        if website and row['website'].lower() != website.lower():
-                            continue
-                        
-                        # Verificar si es tiempo de ejecutar
-                        proxima_ejecucion = row.get('proxima_ejecucion', '')
-                        
-                        if not proxima_ejecucion:
-                            # Primera ejecución
-                            pending_scraps.append(dict(row))
-                        else:
-                            try:
-                                proxima_fecha = datetime.fromisoformat(proxima_ejecucion)
-                                if now >= proxima_fecha:
-                                    pending_scraps.append(dict(row))
-                            except ValueError:
-                                # Error en formato de fecha, incluir para ejecución
-                                pending_scraps.append(dict(row))
-            
-            # Ordenar por prioridad y luego por tiempo sin ejecutar
-            pending_scraps.sort(key=lambda x: (
-                int(x.get('prioridad', 10)),
-                x.get('ultima_ejecucion', '1900-01-01')
-            ))
-            
+            for scrap in self.urls_registry:
+                if not scrap.get('activo', True):
+                    continue
+
+                if website and scrap['website'].lower() != website.lower():
+                    continue
+
+                next_run = scrap.get('next_run', '')
+
+                if not next_run:
+                    pending_scraps.append(scrap)
+                else:
+                    try:
+                        if now >= datetime.fromisoformat(next_run):
+                            pending_scraps.append(scrap)
+                    except ValueError:
+                        pending_scraps.append(scrap)
+
+            pending_scraps.sort(
+                key=lambda x: (int(x.get('prioridad', 10)), x.get('last_run', '1900-01-01'))
+            )
             return pending_scraps
-            
+
         except Exception as e:
             self.logger.error(f"Error obteniendo scraps pendientes: {e}")
             return []
@@ -248,82 +310,63 @@ class EnhancedScrapsRegistry:
     
     def get_scraps_by_website(self, website: str) -> List[Dict]:
         """Obtener todos los scraps de un sitio web específico"""
-        scraps = []
-        
         try:
-            if not self.registry_file.exists():
-                return scraps
-            
-            with open(self.registry_file, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                
-                for row in reader:
-                    if row['website'].lower() == website.lower():
-                        scraps.append(dict(row))
-            
-            # Ordenar por prioridad
+            scraps = [s for s in self.urls_registry if s['website'].lower() == website.lower()]
             scraps.sort(key=lambda x: int(x.get('prioridad', 10)))
             return scraps
-            
         except Exception as e:
             self.logger.error(f"Error obteniendo scraps por website: {e}")
             return []
     
-    def update_scrap_execution(self, scrap_id: str, status: str, records_extracted: int = 0, 
+    def update_scrap_execution(self, scrap_id: str, status: str, records_extracted: int = 0,
                              execution_time_minutes: float = 0, observations: str = '') -> bool:
         """Actualizar el estado de ejecución de un scrap"""
         try:
-            # Leer el registro actual
-            rows = []
-            updated = False
-            
-            with open(self.registry_file, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                fieldnames = reader.fieldnames
-                
-                for row in reader:
-                    if row['id'] == scrap_id:
-                        # Actualizar la fila
-                        now = datetime.now()
-                        intervalo_dias = int(row.get('intervalo_dias', 30))
-                        proxima_ejecucion = now + timedelta(days=intervalo_dias)
-                        
-                        row['ultima_ejecucion'] = now.isoformat()
-                        row['proxima_ejecucion'] = proxima_ejecucion.isoformat()
-                        row['total_ejecuciones'] = str(int(row.get('total_ejecuciones', 0)) + 1)
-                        
-                        if status.lower() == 'exitoso':
-                            row['ejecuciones_exitosas'] = str(int(row.get('ejecuciones_exitosas', 0)) + 1)
-                        else:
-                            row['ejecuciones_fallidas'] = str(int(row.get('ejecuciones_fallidas', 0)) + 1)
-                        
-                        row['ultimo_estado'] = status
-                        row['registros_extraidos'] = str(records_extracted)
-                        
-                        # Actualizar tiempo promedio
-                        total_ejecuciones = int(row['total_ejecuciones'])
-                        tiempo_anterior = float(row.get('tiempo_promedio_minutos', 0))
-                        nuevo_promedio = ((tiempo_anterior * (total_ejecuciones - 1)) + execution_time_minutes) / total_ejecuciones
-                        row['tiempo_promedio_minutos'] = str(round(nuevo_promedio, 2))
-                        
-                        row['observaciones'] = observations
-                        updated = True
-                    
-                    rows.append(row)
-            
-            if updated:
-                # Escribir el archivo actualizado
-                with open(self.registry_file, 'w', newline='', encoding='utf-8') as f:
-                    writer = csv.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    writer.writerows(rows)
-                
-                self.logger.info(f"Scrap {scrap_id} actualizado: {status}")
-                return True
-            else:
+            scrap = next((s for s in self.urls_registry if s['id'] == scrap_id), None)
+            if not scrap:
                 self.logger.warning(f"Scrap {scrap_id} no encontrado para actualizar")
                 return False
-                
+
+            csv_path = self.csv_urls_dir / scrap['csv_file']
+            self.ensure_csv_progress_columns(csv_path)
+
+            with open(csv_path, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(row for row in f if not row.lstrip().startswith('#'))
+                fieldnames = reader.fieldnames or []
+                rows = list(reader)
+
+            row_index = scrap['csv_row'] - 1
+            if row_index >= len(rows):
+                self.logger.warning(f"Índice de fila inválido para {scrap_id}")
+                return False
+
+            row = rows[row_index]
+            now = datetime.now()
+            next_run = now + timedelta(days=scrap.get('intervalo_dias', 30))
+
+            row['Status'] = status
+            row['LastRun'] = now.isoformat()
+            row['NextRun'] = next_run.isoformat()
+            row['ScrapOfMonth'] = now.strftime('%Y-%m')
+            row['Records'] = str(records_extracted)
+            rows[row_index] = row
+
+            with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(rows)
+
+            scrap.update({
+                'status': status,
+                'last_run': row['LastRun'],
+                'next_run': row['NextRun'],
+                'scrap_of_month': row['ScrapOfMonth'],
+                'records': row['Records']
+            })
+
+            self.logger.info(f"Scrap {scrap_id} actualizado: {status}")
+            return True
+
         except Exception as e:
             self.logger.error(f"Error actualizando scrap {scrap_id}: {e}")
             return False
@@ -348,60 +391,54 @@ class EnhancedScrapsRegistry:
             'ejecuciones_fallidas': 0,
             'promedio_registros': 0
         }
-        
+
         try:
-            if not self.registry_file.exists():
-                return stats
-            
             total_registros = 0
-            ejecutados = 0
-            
-            with open(self.registry_file, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                
-                for row in reader:
-                    stats['total_scraps'] += 1
-                    
-                    if row['activo'].lower() == 'true':
-                        stats['scraps_activos'] += 1
-                    
-                    website = row['website']
-                    if website not in stats['por_website']:
-                        stats['por_website'][website] = {
-                            'total': 0,
-                            'activos': 0,
-                            'ejecuciones': 0,
-                            'exitosos': 0,
-                            'fallidos': 0
-                        }
-                    
-                    stats['por_website'][website]['total'] += 1
-                    
-                    if row['activo'].lower() == 'true':
-                        stats['por_website'][website]['activos'] += 1
-                    
-                    ejecuciones = int(row.get('total_ejecuciones', 0))
-                    exitosos = int(row.get('ejecuciones_exitosas', 0))
-                    fallidos = int(row.get('ejecuciones_fallidas', 0))
-                    registros = int(row.get('registros_extraidos', 0))
-                    
-                    stats['total_ejecuciones'] += ejecuciones
-                    stats['ejecuciones_exitosas'] += exitosos
-                    stats['ejecuciones_fallidas'] += fallidos
-                    
-                    stats['por_website'][website]['ejecuciones'] += ejecuciones
-                    stats['por_website'][website]['exitosos'] += exitosos
-                    stats['por_website'][website]['fallidos'] += fallidos
-                    
-                    if ejecuciones > 0:
-                        total_registros += registros
-                        ejecutados += 1
-            
-            if ejecutados > 0:
-                stats['promedio_registros'] = round(total_registros / ejecutados, 2)
-            
+
+            for scrap in self.urls_registry:
+                stats['total_scraps'] += 1
+
+                if scrap.get('activo', True):
+                    stats['scraps_activos'] += 1
+
+                website = scrap['website']
+                if website not in stats['por_website']:
+                    stats['por_website'][website] = {
+                        'total': 0,
+                        'activos': 0,
+                        'ejecuciones': 0,
+                        'exitosos': 0,
+                        'fallidos': 0
+                    }
+
+                stats['por_website'][website]['total'] += 1
+
+                if scrap.get('activo', True):
+                    stats['por_website'][website]['activos'] += 1
+
+                if scrap.get('last_run'):
+                    stats['total_ejecuciones'] += 1
+                    stats['por_website'][website]['ejecuciones'] += 1
+
+                    if scrap.get('status', '').lower() == 'exitoso':
+                        stats['ejecuciones_exitosas'] += 1
+                        stats['por_website'][website]['exitosos'] += 1
+                    else:
+                        stats['ejecuciones_fallidas'] += 1
+                        stats['por_website'][website]['fallidos'] += 1
+
+                    try:
+                        total_registros += int(scrap.get('records', 0))
+                    except ValueError:
+                        pass
+
+            if stats['total_ejecuciones'] > 0:
+                stats['promedio_registros'] = round(
+                    total_registros / stats['total_ejecuciones'], 2
+                )
+
             return stats
-            
+
         except Exception as e:
             self.logger.error(f"Error obteniendo estadísticas: {e}")
             return stats
@@ -409,6 +446,65 @@ class EnhancedScrapsRegistry:
     def get_registry_stats(self) -> Dict:
         """Alias de get_statistics para compatibilidad"""
         return self.get_statistics()
+
+    def get_csv_progress(self, csv_filename: str) -> Dict[str, int]:
+        """Obtener resumen de progreso de un archivo CSV específico"""
+        progress = {
+            'total': 0,
+            'completed': 0,
+            'pending': 0,
+            'success': 0,
+            'failed': 0
+        }
+
+        csv_path = self.csv_urls_dir / csv_filename
+        if not csv_path.exists():
+            return progress
+
+        self.ensure_csv_progress_columns(csv_path)
+        now = datetime.now()
+
+        try:
+            with open(csv_path, 'r', encoding='utf-8-sig') as f:
+                reader = csv.DictReader(row for row in f if not row.lstrip().startswith('#'))
+                for row in reader:
+                    progress['total'] += 1
+                    status = row.get('Status', '')
+                    last_run = row.get('LastRun', '')
+                    next_run = row.get('NextRun', '')
+
+                    if last_run:
+                        progress['completed'] += 1
+                        if status.lower() == 'exitoso':
+                            progress['success'] += 1
+                        elif status:
+                            progress['failed'] += 1
+
+                    if not next_run:
+                        progress['pending'] += 1
+                    else:
+                        try:
+                            if datetime.fromisoformat(next_run) <= now:
+                                progress['pending'] += 1
+                        except ValueError:
+                            progress['pending'] += 1
+
+        except Exception as e:
+            self.logger.error(f"Error obteniendo progreso de {csv_filename}: {e}")
+
+        return progress
+
+    def get_all_progress(self) -> Dict[str, Dict[str, int]]:
+        """Obtener progreso de todos los archivos CSV"""
+        progress: Dict[str, Dict[str, int]] = {}
+
+        if not self.csv_urls_dir.exists():
+            return progress
+
+        for csv_file in self.csv_urls_dir.glob('*.csv'):
+            progress[csv_file.name] = self.get_csv_progress(csv_file.name)
+
+        return progress
     
     def get_output_path(self, scrap_data: Dict) -> Path:
         """Obtener la ruta de salida para un scrap específico"""
