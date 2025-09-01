@@ -53,6 +53,7 @@ from typing import Dict, List, Optional, Tuple
 import argparse
 
 from utils.url_utils import extract_url_column, load_urls_from_csv
+from utils.path_builder import build_path
 
 # Selenium imports
 from seleniumbase import SB
@@ -107,54 +108,16 @@ class PropiedadesProfessionalScraper:
     def setup_paths(self):
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
-        
-        # Configuración de operaciones con abreviaciones
-        operation_folders = {
-            'venta': 'ven',
-            'renta': 'ren'
-        }
-        operation_folder = operation_folders.get(self.operation_type, 'ven')
-        
-        # Obtener fecha actual en formato abreviado
-        now = datetime.now()
-        month_abbrev = self.get_month_abbreviation(now.month)
-        year_short = str(now.year)[2:]  # Últimos 2 dígitos del año
-        script_number = self.get_script_number(month_abbrev, year_short)
-        
-        # Nueva estructura: data/prop/{operation}/{mesAño}/{script}/
-        self.data_dir = self.project_root / 'data' / 'prop' / operation_folder / f"{month_abbrev}{year_short}" / str(script_number)
         self.logs_dir = self.project_root / 'logs'
-        self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
-        
-        # Crear directorios si no existen
-        for directory in [self.data_dir, self.logs_dir, self.checkpoint_dir]:
+        self.checkpoint_dir = self.logs_dir / 'checkpoints'
+
+        path_info = build_path('Prop', 'Ciudad', self.operation_type, 'Producto')
+        self.month_year = path_info.month_year
+        self.run_number = int(path_info.run_number)
+        self.data_dir = path_info.directory
+
+        for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
-    
-    def get_month_abbreviation(self, month_num):
-        """Obtener abreviatura de 3 letras del mes"""
-        month_abbrevs = {
-            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
-            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-        }
-        return month_abbrevs.get(month_num, 'unk')
-    
-    def get_script_number(self, month_abbrev, year_short):
-        """Detectar automáticamente el número de script basado en carpetas existentes"""
-        # Construir la ruta base para este mes/año
-        operation_folders = {'venta': 'ven', 'renta': 'ren'}
-        operation_folder = operation_folders.get(self.operation_type, 'ven')
-        base_path = self.project_root / 'data' / 'prop' / operation_folder / f"{month_abbrev}{year_short}"
-        
-        if not base_path.exists():
-            return 1
-        
-        # Buscar carpetas numéricas existentes
-        existing_scripts = []
-        for item in base_path.iterdir():
-            if item.is_dir() and item.name.isdigit():
-                existing_scripts.append(int(item.name))
-        
-        return max(existing_scripts) + 1 if existing_scripts else 1
     
     def setup_logging(self):
         """Configurar sistema de logging profesional"""
@@ -511,15 +474,13 @@ class PropiedadesProfessionalScraper:
 
         # Generar timestamp para archivos
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Obtener fecha actual en formato abreviado para nombre de archivo
-        now = datetime.now()
-        month_abbrev = self.get_month_abbreviation(now.month)
-        year_short = str(now.year)[2:]
-        script_number = str(self.get_script_number(month_abbrev, year_short) - 1)  # -1 porque ya se creó la carpeta
-        
+
+        run_str = f"{self.run_number:02d}"
+        month_abbrev = self.month_year[:3]
+        year_short = self.month_year[-2:]
+
         # Archivo CSV principal con nueva nomenclatura
-        csv_filename = f"prop_{month_abbrev}{year_short}_{script_number}.csv"
+        csv_filename = f"prop_{month_abbrev}{year_short}_{run_str}.csv"
         csv_path = self.data_dir / csv_filename
         
         # Guardar CSV

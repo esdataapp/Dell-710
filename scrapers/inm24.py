@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import argparse
+from utils.path_builder import build_path
 
 # Selenium imports
 from seleniumbase import SB
@@ -92,31 +93,16 @@ class Inmuebles24ProfessionalScraper:
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
         self.logs_dir = self.project_root / 'logs'
-        self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
+        self.checkpoint_dir = self.logs_dir / 'checkpoints'
         self.site_name = 'Inm24'
 
-        ciudad_cap = (city or 'Ciudad').capitalize()
-        operacion_cap = (operation or 'Operacion').capitalize()
-        producto_cap = (product or 'Producto').capitalize()
-
-        now = datetime.now()
-        month_abbrev = {
-            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
-            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-        }[now.month]
-        year_short = str(now.year)[-2:]
-        self.month_year = f"{month_abbrev}{year_short}"
-
-        base_dir = (self.project_root / 'data' / self.site_name /
-                    ciudad_cap / operacion_cap / producto_cap / self.month_year)
-        run_number = 1
-        while (base_dir / str(run_number)).exists():
-            run_number += 1
-        self.run_number = run_number
-        self.run_dir = base_dir / str(run_number)
+        path_info = build_path(self.site_name, city or 'Ciudad', operation or 'Operacion', product or 'Producto')
+        self.month_year = path_info.month_year
+        self.run_number = int(path_info.run_number)
+        self.run_dir = path_info.directory
         self.data_dir = self.run_dir
 
-        for directory in [self.logs_dir, self.checkpoint_dir, self.run_dir]:
+        for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
     
     def setup_logging(self):
@@ -470,19 +456,6 @@ class Inmuebles24ProfessionalScraper:
             self.logger.debug(f"Error detectando paginación: {e}")
             return False
     
-    def get_script_number(self, month_abbrev, year_short):
-        """Detectar automáticamente si es la primera (1) o segunda (2) ejecución del mes"""
-        month_year_folder = f"{month_abbrev}{year_short}"
-        execution_dir_1 = self.data_dir / self.operation_folder / month_year_folder / "1"
-        
-        # Si existe la carpeta 1 y tiene archivos CSV, entonces esta es la segunda ejecución
-        if execution_dir_1.exists():
-            csv_files = list(execution_dir_1.glob("I24_URLs_*.csv"))
-            if csv_files:
-                return "2"  # Segunda ejecución del mes
-        
-        return "1"  # Primera ejecución del mes
-
     def save_results(self, city: str, operation: str, product: str) -> str:
         """Guardar resultados y URLs en formato CSV"""
         if not self.properties_data:

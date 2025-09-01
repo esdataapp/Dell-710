@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import argparse
+from utils.path_builder import build_path
 
 # Selenium imports
 from seleniumbase import SB
@@ -68,22 +69,15 @@ class Inmuebles24UnicoProfessionalScraper:
     def setup_paths(self):
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
-        
-        # Mapear operation_type a nueva nomenclatura
-        operation_mapping = {
-            'renta': 'ren',
-            'venta': 'ven', 
-            'venta-d': 'ven-d',
-            'venta-r': 'ven-r'
-        }
-        self.operation_folder = operation_mapping.get(self.operation_type, 'ven')
-        
-        self.data_dir = self.project_root / 'data' / 'inm24' / self.operation_folder
         self.logs_dir = self.project_root / 'logs'
-        self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
-        
-        # Crear directorios si no existen
-        for directory in [self.data_dir, self.logs_dir, self.checkpoint_dir]:
+        self.checkpoint_dir = self.logs_dir / 'checkpoints'
+
+        path_info = build_path('Inm24', 'Ciudad', self.operation_type, 'Detalle')
+        self.month_year = path_info.month_year
+        self.run_number = int(path_info.run_number)
+        self.data_dir = path_info.directory
+
+        for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
     
     def setup_logging(self):
@@ -895,19 +889,6 @@ class Inmuebles24UnicoProfessionalScraper:
         
         return self.properties_processed, self.successful_extractions
     
-    def get_script_number(self, month_abbrev, year_short):
-        """Detectar automáticamente si es la primera (1) o segunda (2) ejecución del mes"""
-        month_year_folder = f"{month_abbrev}{year_short}"
-        execution_dir_1 = self.data_dir / month_year_folder / "1"
-        
-        # Si existe la carpeta 1 y tiene archivos CSV, entonces esta es la segunda ejecución
-        if execution_dir_1.exists():
-            csv_files = list(execution_dir_1.glob("I24_URLs_*.csv"))
-            if csv_files:
-                return "2"  # Segunda ejecución del mes
-        
-        return "1"  # Primera ejecución del mes
-
     def save_results(self) -> str:
         """Guardar resultados en formato CSV con metadata"""
         if not self.properties_data:
@@ -917,25 +898,14 @@ class Inmuebles24UnicoProfessionalScraper:
         # Generar timestamp para archivos
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        # Determinar carpeta de destino con nueva nomenclatura
-        current_date = datetime.now()
-        month_abbrev = {
-            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
-            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-        }[current_date.month]
-        year_short = str(current_date.year)[-2:]  # Últimos 2 dígitos del año
-        
-        # Determinar si es la primera (1) o segunda (2) ejecución del mes automáticamente
-        script_number = self.get_script_number(month_abbrev, year_short)
-        
-        # Crear estructura de carpetas: inm24/ven/ene26/1/
-        month_year_folder = f"{month_abbrev}{year_short}"  # ene26, dic25, etc.
-        script_folder = script_number  # 1 o 2
-        execution_dir = self.data_dir / month_year_folder / script_folder
+        run_str = f"{self.run_number:02d}"
+        month_abbrev = self.month_year[:3]
+        year_short = self.month_year[-2:]
+
+        execution_dir = self.data_dir
         execution_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Archivo CSV de detalles con nuevo formato: inm24_ene26_1.csv
-        csv_filename = f"inm24_{month_abbrev}{year_short}_{script_number}.csv"
+
+        csv_filename = f"inm24_{month_abbrev}{year_short}_{run_str}.csv"
         csv_path = execution_dir / csv_filename
         
         # Guardar CSV
