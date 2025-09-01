@@ -18,7 +18,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import argparse
 
-from utils.url_utils import extract_url_column, load_urls_from_csv
+from utils.url_utils import (
+    extract_url_column,
+    load_urls_from_csv,
+    load_urls_for_site,
+)
 
 # Selenium imports
 from seleniumbase import SB
@@ -719,11 +723,12 @@ def main():
     urls: List[str]
     if args.url:
         urls = [args.url]
-    else:
-        default_csv = Path(__file__).parent.parent / 'URLs' / 'cyt_urls.csv'
-        csv_path = args.urls_file or default_csv
-        url_entries = load_urls_from_csv(csv_path)
+    elif args.urls_file:
+        url_entries = load_urls_from_csv(args.urls_file)
         urls = [extract_url_column(row) for row in url_entries]
+    else:
+        urls_dir = Path(__file__).parent.parent / 'URLs'
+        urls = load_urls_for_site(urls_dir, 'casas_y_terrenos')
 
     success = True
     for target in urls:
@@ -745,11 +750,12 @@ def run_scraper(url: str = None, output_path: str = None,
     """Interface function used by orchestrator for multiple URLs."""
     if url:
         urls = [url]
-    else:
-        default_csv = Path(__file__).parent.parent / 'URLs' / 'cyt_urls.csv'
-        csv_path = urls_file or default_csv
-        url_entries = load_urls_from_csv(csv_path)
+    elif urls_file:
+        url_entries = load_urls_from_csv(urls_file)
         urls = [extract_url_column(row) for row in url_entries]
+    else:
+        urls_dir = Path(__file__).parent.parent / 'URLs'
+        urls = load_urls_for_site(urls_dir, 'casas_y_terrenos')
 
     results: List[Dict] = []
     for target in urls:

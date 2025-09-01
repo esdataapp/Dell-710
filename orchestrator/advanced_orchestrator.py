@@ -446,9 +446,13 @@ class AdvancedOrchestrator:
             self.run_single_task(task)
         self.logger.info(f"✅ Sitio completado: {website}")
 
-    def run_batch_from_csv(self):
-        """Ejecutar el flujo completo a partir de los CSVs en URLs/"""
-        tasks_by_site = self.load_tasks_from_urls_dir()
+    def run_batch_from_csv(self, urls_dir: Path = None):
+        """Ejecutar el flujo completo a partir de los CSVs en ``urls_dir``.
+
+        Si ``urls_dir`` no se especifica, se utiliza por defecto la carpeta
+        ``URLs/`` en la raíz del proyecto.
+        """
+        tasks_by_site = self.load_tasks_from_urls_dir(urls_dir)
         if not tasks_by_site:
             self.logger.info("📝 No se encontraron tareas en URLs/")
             return

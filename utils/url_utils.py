@@ -1,5 +1,6 @@
 """Utility helpers for working with URL columns in CSV rows."""
 import csv
+from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
 
@@ -59,3 +60,36 @@ def load_urls_from_csv(path: str) -> List[Dict[str, str]]:
                 records.append(row)
 
     return records
+
+
+def load_urls_for_site(urls_dir: str, site: str) -> List[str]:
+    """Load all URLs for a given site from CSV files in a directory.
+
+    Args:
+        urls_dir: Directory containing CSV files with URL records.
+        site: Name of the site to filter by (matches ``PaginaWeb`` column).
+
+    Returns:
+        A list of URL strings for the requested site. If the directory does not
+        exist, an empty list is returned.
+    """
+
+    directory = Path(urls_dir)
+    if not directory.exists():
+        return []
+
+    site_lower = site.lower()
+    urls: List[str] = []
+
+    for csv_file in directory.glob("*.csv"):
+        try:
+            rows = load_urls_from_csv(str(csv_file))
+        except Exception:
+            continue
+        for row in rows:
+            if (row.get("PaginaWeb") or "").strip().lower() == site_lower:
+                url_val = extract_url_column(row)
+                if url_val:
+                    urls.append(url_val)
+
+    return urls
