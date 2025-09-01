@@ -42,8 +42,8 @@ class Inmuebles24ProfessionalScraper:
     """
     
     def __init__(self, url=None, output_path=None, headless=True, max_pages=None,
-                 resume_from=None, operation_type='venta', ciudad='Ciudad',
-                 operacion='Operacion', producto='Producto'):
+                 resume_from=None, operation_type='venta', city=None,
+                 product=None):
         # Parámetros principales
         self.target_url = url
         self.output_path = output_path
@@ -51,12 +51,11 @@ class Inmuebles24ProfessionalScraper:
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
         self.operation_type = operation_type  # venta, renta, venta-d, venta-r
-        self.ciudad = ciudad
-        self.operacion = operacion
-        self.producto = producto
+        self.city = city or 'Ciudad'
+        self.product = product or 'Producto'
 
         # Configuración de paths
-        self.setup_paths(ciudad, operacion, producto)
+        self.setup_paths(self.city, self.operation_type, self.product)
         
         # Configuración de logging
         self.setup_logging()
@@ -67,6 +66,7 @@ class Inmuebles24ProfessionalScraper:
         
         # Datos del scraping
         self.properties_data = []
+        self.property_urls = []
         
         # Performance metrics
         self.start_time = None
@@ -88,16 +88,16 @@ class Inmuebles24ProfessionalScraper:
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
     
-    def setup_paths(self, ciudad: str, operacion: str, producto: str):
+    def setup_paths(self, city: str, operation: str, product: str):
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
         self.logs_dir = self.project_root / 'logs'
         self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
         self.site_name = 'Inm24'
 
-        ciudad_cap = ciudad.capitalize()
-        operacion_cap = operacion.capitalize()
-        producto_cap = producto.capitalize()
+        ciudad_cap = (city or 'Ciudad').capitalize()
+        operacion_cap = (operation or 'Operacion').capitalize()
+        producto_cap = (product or 'Producto').capitalize()
 
         now = datetime.now()
         month_abbrev = {
@@ -263,6 +263,9 @@ class Inmuebles24ProfessionalScraper:
                     # Agregar solo si tiene datos válidos
                     if property_data['titulo'] != "N/A" or property_data['precio'] != "N/A":
                         properties.append(property_data)
+                        link = property_data.get('link')
+                        if link and link not in self.property_urls:
+                            self.property_urls.append(link)
                         
                 except Exception as e:
                     self.logger.warning(f"⚠️  Error extrayendo propiedad {i+1}: {e}")
@@ -480,15 +483,15 @@ class Inmuebles24ProfessionalScraper:
         
         return "1"  # Primera ejecución del mes
 
-    def save_results(self, ciudad: str, operacion: str, producto: str) -> str:
-        """Guardar resultados en formato CSV en la ruta especificada"""
+    def save_results(self, city: str, operation: str, product: str) -> str:
+        """Guardar resultados y URLs en formato CSV"""
         if not self.properties_data:
             self.logger.warning("⚠️  No hay datos para guardar")
             return None
 
-        ciudad_cap = ciudad.capitalize()
-        operacion_cap = operacion.capitalize()
-        producto_cap = producto.capitalize()
+        city_cap = (city or 'Ciudad').capitalize()
+        operation_cap = (operation or 'Operacion').capitalize()
+        product_cap = (product or 'Producto').capitalize()
 
         run_str = f"{self.run_number:02d}"
         if self.output_path:
@@ -511,6 +514,21 @@ class Inmuebles24ProfessionalScraper:
 
         self.logger.info(f"💾 Resultados guardados en: {csv_path}")
 
+        # Guardar URLs recolectadas con nueva nomenclatura
+        month_abbrev = self.month_year[:3]
+        year_short = self.month_year[-2:]
+        city_code = city_cap[:3].upper()
+        op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
+        op_code = op_code_map.get((operation or '').lower(), operation_cap[:3].upper())
+        product_code = product_cap[:3].upper()
+        urls_filename = f"I24URL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{run_str}.csv"
+        urls_path = self.run_dir / urls_filename
+        if self.property_urls:
+            with open(urls_path, 'w', encoding='utf-8') as f:
+                for url in self.property_urls:
+                    f.write(f"{url}\n")
+            self.logger.info(f"🔗 URLs guardadas en: {urls_path}")
+
         if self.checkpoint_file.exists():
             self.checkpoint_file.unlink()
             self.logger.info("🗑️  Checkpoint limpiado")
@@ -527,7 +545,7 @@ class Inmuebles24ProfessionalScraper:
             pages_processed, properties_found = self.scrape_pages()
             
             # Guardar resultados
-            csv_path = self.save_results(self.ciudad, self.operacion, self.producto)
+            csv_path = self.save_results(self.city, self.operation_type, self.product)
             
             # Calcular estadísticas finales
             total_time = datetime.now() - self.start_time
@@ -586,11 +604,9 @@ def main():
     parser.add_argument('--operation', type=str, default='venta',
                        choices=['venta', 'renta', 'venta-d', 'venta-r'],
                        help='Tipo de operación: venta, renta, venta-d, venta-r')
-    parser.add_argument('--ciudad', type=str, default='Ciudad',
+    parser.add_argument('--city', type=str, default=None,
                        help='Ciudad para la estructura de salida')
-    parser.add_argument('--operacion', type=str, default='Operacion',
-                       help='Operación para la estructura de salida')
-    parser.add_argument('--producto', type=str, default='Producto',
+    parser.add_argument('--product', type=str, default=None,
                        help='Producto para la estructura de salida')
     
     args = parser.parse_args()
@@ -610,9 +626,8 @@ def main():
         max_pages=args.pages,
         resume_from=args.resume,
         operation_type=args.operation,
-        ciudad=args.ciudad,
-        operacion=args.operacion,
-        producto=args.producto
+        city=args.city,
+        product=args.product
     )
     
     results = scraper.run()
@@ -620,9 +635,8 @@ def main():
     # Retornar código de salida apropiado
     sys.exit(0 if results['success'] else 1)
 
-def run_scraper(url: str, output_path: str, ciudad: str = 'Ciudad',
-                operacion: str = 'Operacion', producto: str = 'Producto',
-                max_pages: int = None) -> Dict:
+def run_scraper(url: str, output_path: str, city: str = None,
+                product: str = None, max_pages: int = None) -> Dict:
     """Función de interfaz para usar desde el orquestador"""
     scraper = Inmuebles24ProfessionalScraper(
         url=url,
@@ -630,9 +644,8 @@ def run_scraper(url: str, output_path: str, ciudad: str = 'Ciudad',
         headless=True,
         max_pages=max_pages,
         resume_from=1,
-        ciudad=ciudad,
-        operacion=operacion,
-        producto=producto
+        city=city,
+        product=product
     )
     
     return scraper.run()

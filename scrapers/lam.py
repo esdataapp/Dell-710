@@ -30,18 +30,16 @@ class LamudiProfessionalScraper:
     """
     
     def __init__(self, headless=True, max_pages=None, resume_from=None,
-                 operation_type='venta', ciudad='Ciudad', operacion='Operacion',
-                 producto='Producto'):
+                 operation_type='venta', city=None, product=None):
         self.headless = headless
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
         self.operation_type = operation_type  # 'venta' o 'renta'
-        self.ciudad = ciudad
-        self.operacion = operacion
-        self.producto = producto
+        self.city = city or 'Ciudad'
+        self.product = product or 'Producto'
 
         # Configuración de paths
-        self.setup_paths(ciudad, operacion, producto)
+        self.setup_paths(self.city, self.operation_type, self.product)
         
         # Configuración de logging
         self.setup_logging()
@@ -71,16 +69,16 @@ class LamudiProfessionalScraper:
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
     
-    def setup_paths(self, ciudad: str, operacion: str, producto: str):
+    def setup_paths(self, city: str, operation: str, product: str):
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
         self.logs_dir = self.project_root / 'logs'
         self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
         self.site_name = 'Lam'
 
-        ciudad_cap = ciudad.capitalize()
-        operacion_cap = operacion.capitalize()
-        producto_cap = producto.capitalize()
+        ciudad_cap = (city or 'Ciudad').capitalize()
+        operacion_cap = (operation or 'Operacion').capitalize()
+        producto_cap = (product or 'Producto').capitalize()
 
         now = datetime.now()
         month_abbrev = {
@@ -564,16 +562,16 @@ class LamudiProfessionalScraper:
         except Exception as e:
             self.logger.error(f"❌ Error guardando URLs: {e}")
     
-    def save_results(self, ciudad: str, operacion: str, producto: str) -> str:
+    def save_results(self, city: str, operation: str, product: str) -> str:
         """Guardar resultados en formato CSV con metadata"""
         if not self.properties_data:
             self.logger.warning("⚠️  No hay datos para guardar")
             return None
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        ciudad_cap = ciudad.capitalize()
-        operacion_cap = operacion.capitalize()
-        producto_cap = producto.capitalize()
+        ciudad_cap = (city or 'Ciudad').capitalize()
+        operacion_cap = (operation or 'Operacion').capitalize()
+        producto_cap = (product or 'Producto').capitalize()
         run_str = f"{self.run_number:02d}"
 
         csv_filename = (
@@ -589,7 +587,14 @@ class LamudiProfessionalScraper:
                 writer.writeheader()
                 writer.writerows(self.properties_data)
 
-        urls_filename = f"{self.site_name.upper()}_URLs_{self.month_year}_{run_str}.csv"
+        # Nueva nomenclatura para archivo de URLs
+        month_abbrev = self.month_year[:3]
+        year_short = self.month_year[-2:]
+        city_code = ciudad_cap[:3].upper()
+        op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
+        op_code = op_code_map.get((operation or '').lower(), operacion_cap[:3].upper())
+        product_code = producto_cap[:3].upper()
+        urls_filename = f"LAMURL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{run_str}.csv"
         urls_path = self.run_dir / urls_filename
         if self.property_urls:
             with open(urls_path, 'w', encoding='utf-8') as f:
@@ -648,7 +653,7 @@ class LamudiProfessionalScraper:
             pages_processed, properties_found = self.scrape_pages()
             
             # Guardar resultados
-            csv_path = self.save_results(self.ciudad, self.operacion, self.producto)
+            csv_path = self.save_results(self.city, self.operation_type, self.product)
             
             # Calcular estadísticas finales
             total_time = datetime.now() - self.start_time
@@ -705,11 +710,9 @@ def main():
                        help='Tipo de operación: venta o renta')
     parser.add_argument('--gui', action='store_true',
                        help='Ejecutar con GUI (opuesto a --headless)')
-    parser.add_argument('--ciudad', type=str, default='Ciudad',
+    parser.add_argument('--city', type=str, default=None,
                        help='Ciudad para la estructura de salida')
-    parser.add_argument('--operacion', type=str, default='Operacion',
-                       help='Operación para la estructura de salida')
-    parser.add_argument('--producto', type=str, default='Producto',
+    parser.add_argument('--product', type=str, default=None,
                        help='Producto para la estructura de salida')
     
     args = parser.parse_args()
@@ -724,9 +727,8 @@ def main():
         max_pages=args.pages,
         resume_from=args.resume,
         operation_type=args.operation,
-        ciudad=args.ciudad,
-        operacion=args.operacion,
-        producto=args.producto
+        city=args.city,
+        product=args.product
     )
     
     results = scraper.run()
