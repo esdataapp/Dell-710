@@ -39,7 +39,9 @@ class CasasTerrenosProfessionalScraper:
     Adaptado para trabajar con URLs del registro CSV
     """
     
-    def __init__(self, url=None, output_path=None, headless=True, max_pages=None, resume_from=None, operation_type='venta'):
+    def __init__(self, url=None, output_path=None, headless=True, max_pages=None,
+                 resume_from=None, operation_type='venta', ciudad='Ciudad',
+                 operacion='Operacion', producto='Producto'):
         # Parámetros principales
         self.target_url = url
         self.output_path = output_path
@@ -47,9 +49,12 @@ class CasasTerrenosProfessionalScraper:
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
         self.operation_type = operation_type  # venta, renta, etc.
-        
+        self.ciudad = ciudad
+        self.operacion = operacion
+        self.producto = producto
+
         # Configuración de paths
-        self.setup_paths()
+        self.setup_paths(ciudad, operacion, producto)
         
         # Configuración de logging
         self.setup_logging()
@@ -97,24 +102,35 @@ class CasasTerrenosProfessionalScraper:
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
     
-    def setup_paths(self):
+    def setup_paths(self, ciudad: str, operacion: str, producto: str):
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
         self.logs_dir = self.project_root / 'logs'
         self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
-        
-        # Mapear operation_type a carpeta (para cyt solo hay ven y ren)
-        operation_mapping = {
-            'venta': 'ven',
-            'renta': 'ren'
-        }
-        self.operation_folder = operation_mapping.get(self.operation_type, 'ven')
-        
-        # Directorio de datos con nueva estructura
-        self.data_dir = self.project_root / 'data' / 'cyt'
-        
-        # Crear directorios si no existen
-        for directory in [self.logs_dir, self.checkpoint_dir, self.data_dir]:
+        self.site_name = 'Cyt'
+
+        ciudad_cap = ciudad.capitalize()
+        operacion_cap = operacion.capitalize()
+        producto_cap = producto.capitalize()
+
+        now = datetime.now()
+        month_abbrev = {
+            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
+            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
+        }[now.month]
+        year_short = str(now.year)[-2:]
+        self.month_year = f"{month_abbrev}{year_short}"
+
+        base_dir = (self.project_root / 'data' / self.site_name /
+                    ciudad_cap / operacion_cap / producto_cap / self.month_year)
+        run_number = 1
+        while (base_dir / str(run_number)).exists():
+            run_number += 1
+        self.run_number = run_number
+        self.run_dir = base_dir / str(run_number)
+        self.data_dir = self.run_dir
+
+        for directory in [self.logs_dir, self.checkpoint_dir, self.run_dir]:
             directory.mkdir(parents=True, exist_ok=True)
     
     def setup_logging(self):
@@ -590,53 +606,41 @@ class CasasTerrenosProfessionalScraper:
         
         return "1"  # Primera ejecución del mes
 
-    def save_results(self) -> str:
+    def save_results(self, ciudad: str, operacion: str, producto: str) -> str:
         """Guardar resultados en formato CSV en la ruta especificada"""
         if not self.properties_data:
             self.logger.warning("⚠️  No hay datos para guardar")
             return None
-        
-        # Usar la ruta proporcionada o crear una por defecto
+
+        ciudad_cap = ciudad.capitalize()
+        operacion_cap = operacion.capitalize()
+        producto_cap = producto.capitalize()
+
+        run_str = f"{self.run_number:02d}"
         if self.output_path:
             csv_path = Path(self.output_path)
         else:
-            # Generar nombre con formato cyt_dic25_1.csv y estructura de carpetas optimizada
-            current_date = datetime.now()
-            month_abbrev = {
-                1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
-                7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
-            }[current_date.month]
-            year_short = str(current_date.year)[-2:]  # Últimos 2 dígitos del año
-            
-            # Determinar si es la primera (1) o segunda (2) ejecución del mes automáticamente
-            script_number = self.get_script_number(month_abbrev, year_short)
-            filename = f"cyt_{month_abbrev}{year_short}_{script_number}.csv"
-            
-            # Crear estructura de carpetas: data/cyt/ven/dic25/1/ o data/cyt/ren/dic25/1/
-            month_year_folder = f"{month_abbrev}{year_short}"  # ene26, dic25, etc.
-            script_folder = script_number  # 1 o 2
-            execution_dir = self.data_dir / self.operation_folder / month_year_folder / script_folder
-            execution_dir.mkdir(parents=True, exist_ok=True)
-            csv_path = execution_dir / filename
-        
-        # Crear directorio si no existe
+            filename = (
+                f"{self.site_name}_{ciudad_cap}_{operacion_cap}_{producto_cap}_"
+                f"{self.month_year}_{run_str}.csv"
+            )
+            csv_path = self.run_dir / filename
+
         csv_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Guardar CSV
+
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
             if self.properties_data:
                 fieldnames = self.properties_data[0].keys()
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(self.properties_data)
-        
+
         self.logger.info(f"💾 Resultados guardados en: {csv_path}")
-        
-        # Limpiar checkpoint al finalizar exitosamente
+
         if self.checkpoint_file.exists():
             self.checkpoint_file.unlink()
             self.logger.info("🗑️  Checkpoint limpiado")
-        
+
         return str(csv_path)
     
     def run(self) -> Dict:
@@ -649,7 +653,7 @@ class CasasTerrenosProfessionalScraper:
             pages_processed, properties_found = self.scrape_pages()
             
             # Guardar resultados
-            csv_path = self.save_results()
+            csv_path = self.save_results(self.ciudad, self.operacion, self.producto)
             
             # Calcular estadísticas finales
             total_time = datetime.now() - self.start_time
@@ -710,6 +714,12 @@ def main():
     parser.add_argument('--operation', type=str, default='venta',
                        choices=['venta', 'renta'],
                        help='Tipo de operación: venta, renta')
+    parser.add_argument('--ciudad', type=str, default='Ciudad',
+                       help='Ciudad para la estructura de salida')
+    parser.add_argument('--operacion', type=str, default='Operacion',
+                       help='Operación para la estructura de salida')
+    parser.add_argument('--producto', type=str, default='Producto',
+                       help='Producto para la estructura de salida')
     
     args = parser.parse_args()
     
@@ -738,7 +748,10 @@ def main():
             headless=args.headless,
             max_pages=args.pages,
             resume_from=args.resume,
-            operation_type=args.operation
+            operation_type=args.operation,
+            ciudad=args.ciudad,
+            operacion=args.operacion,
+            producto=args.producto
         )
         result = scraper.run()
         success = success and result.get('success', False)
@@ -746,7 +759,9 @@ def main():
     sys.exit(0 if success else 1)
 
 def run_scraper(url: str = None, output_path: str = None,
-                max_pages: int = None, urls_file: str = None) -> List[Dict]:
+                max_pages: int = None, urls_file: str = None,
+                ciudad: str = 'Ciudad', operacion: str = 'Operacion',
+                producto: str = 'Producto') -> List[Dict]:
     """Interface function used by orchestrator for multiple URLs."""
     if url:
         urls = [url]
@@ -764,7 +779,10 @@ def run_scraper(url: str = None, output_path: str = None,
             output_path=output_path,
             headless=True,
             max_pages=max_pages,
-            resume_from=1
+            resume_from=1,
+            ciudad=ciudad,
+            operacion=operacion,
+            producto=producto
         )
         results.append(scraper.run())
 

@@ -29,14 +29,19 @@ class LamudiProfessionalScraper:
     Optimizado para ejecución en Dell T710 Ubuntu Server
     """
     
-    def __init__(self, headless=True, max_pages=None, resume_from=None, operation_type='venta'):
+    def __init__(self, headless=True, max_pages=None, resume_from=None,
+                 operation_type='venta', ciudad='Ciudad', operacion='Operacion',
+                 producto='Producto'):
         self.headless = headless
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
         self.operation_type = operation_type  # 'venta' o 'renta'
-        
+        self.ciudad = ciudad
+        self.operacion = operacion
+        self.producto = producto
+
         # Configuración de paths
-        self.setup_paths()
+        self.setup_paths(ciudad, operacion, producto)
         
         # Configuración de logging
         self.setup_logging()
@@ -66,30 +71,35 @@ class LamudiProfessionalScraper:
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
     
-    def setup_paths(self):
+    def setup_paths(self, ciudad: str, operacion: str, producto: str):
         """Configurar estructura de paths del proyecto"""
         self.project_root = Path(__file__).parent.parent
-        
-        # Configuración de operaciones con abreviaciones
-        operation_folders = {
-            'venta': 'ven',
-            'renta': 'ren'
-        }
-        operation_folder = operation_folders.get(self.operation_type, 'ven')
-        
-        # Obtener fecha actual en formato abreviado
-        now = datetime.now()
-        month_abbrev = self.get_month_abbreviation(now.month)
-        year_short = str(now.year)[2:]  # Últimos 2 dígitos del año
-        script_number = self.get_script_number(month_abbrev, year_short)
-        
-        # Nueva estructura: data/lam/{operation}/{mesAño}/{script}/
-        self.data_dir = self.project_root / 'data' / 'lam' / operation_folder / f"{month_abbrev}{year_short}" / str(script_number)
         self.logs_dir = self.project_root / 'logs'
         self.checkpoint_dir = self.project_root / 'logs' / 'checkpoints'
-        
-        # Crear directorios si no existen
-        for directory in [self.data_dir, self.logs_dir, self.checkpoint_dir]:
+        self.site_name = 'Lam'
+
+        ciudad_cap = ciudad.capitalize()
+        operacion_cap = operacion.capitalize()
+        producto_cap = producto.capitalize()
+
+        now = datetime.now()
+        month_abbrev = {
+            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun',
+            7: 'jul', 8: 'ago', 9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic'
+        }[now.month]
+        year_short = str(now.year)[-2:]
+        self.month_year = f"{month_abbrev}{year_short}"
+
+        base_dir = (self.project_root / 'data' / self.site_name /
+                    ciudad_cap / operacion_cap / producto_cap / self.month_year)
+        run_number = 1
+        while (base_dir / str(run_number)).exists():
+            run_number += 1
+        self.run_number = run_number
+        self.run_dir = base_dir / str(run_number)
+        self.data_dir = self.run_dir
+
+        for directory in [self.logs_dir, self.checkpoint_dir, self.run_dir]:
             directory.mkdir(parents=True, exist_ok=True)
     
     def get_month_abbreviation(self, month_num):
@@ -554,42 +564,38 @@ class LamudiProfessionalScraper:
         except Exception as e:
             self.logger.error(f"❌ Error guardando URLs: {e}")
     
-    def save_results(self) -> str:
+    def save_results(self, ciudad: str, operacion: str, producto: str) -> str:
         """Guardar resultados en formato CSV con metadata"""
         if not self.properties_data:
             self.logger.warning("⚠️  No hay datos para guardar")
             return None
 
-        # Generar timestamp para archivos
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Obtener fecha actual en formato abreviado para nombre de archivo
-        now = datetime.now()
-        month_abbrev = self.get_month_abbreviation(now.month)
-        year_short = str(now.year)[2:]
-        script_number = str(self.get_script_number(month_abbrev, year_short) - 1)  # -1 porque ya se creó la carpeta
-        
-        # Archivo CSV principal - nueva nomenclatura
-        csv_filename = f"lam_{month_abbrev}{year_short}_{script_number}.csv"
-        csv_path = self.data_dir / csv_filename
-        
-        # Guardar CSV
+        ciudad_cap = ciudad.capitalize()
+        operacion_cap = operacion.capitalize()
+        producto_cap = producto.capitalize()
+        run_str = f"{self.run_number:02d}"
+
+        csv_filename = (
+            f"{self.site_name}_{ciudad_cap}_{operacion_cap}_{producto_cap}_"
+            f"{self.month_year}_{run_str}.csv"
+        )
+        csv_path = self.run_dir / csv_filename
+
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
             if self.properties_data:
                 fieldnames = self.properties_data[0].keys()
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(self.properties_data)
-        
-        # Guardar URLs para el segundo scraper en la misma carpeta
-        urls_filename = f"LAM_URLs_{month_abbrev}{year_short}_{script_number}.csv"
-        urls_path = self.data_dir / urls_filename
+
+        urls_filename = f"{self.site_name.upper()}_URLs_{self.month_year}_{run_str}.csv"
+        urls_path = self.run_dir / urls_filename
         if self.property_urls:
             with open(urls_path, 'w', encoding='utf-8') as f:
                 for url in self.property_urls:
                     f.write(f"{url}\n")
-        
-        # Metadata
+
         metadata = {
             'execution_info': {
                 'timestamp': timestamp,
@@ -615,21 +621,21 @@ class LamudiProfessionalScraper:
                 'urls_file_for_second_phase': str(urls_path)
             }
         }
-        
-        metadata_path = self.data_dir / f"metadata_{timestamp}.json"
+
+        metadata_path = self.run_dir / f"metadata_{timestamp}.json"
         with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
-        
+
         self.logger.info(f"💾 Resultados guardados:")
         self.logger.info(f"   📄 CSV: {csv_path}")
         self.logger.info(f"   🔗 URLs: {urls_path}")
         self.logger.info(f"   📋 Metadata: {metadata_path}")
-        
+
         # Limpiar checkpoint al finalizar exitosamente
         if self.checkpoint_file.exists():
             self.checkpoint_file.unlink()
             self.logger.info("🗑️  Checkpoint limpiado")
-        
+
         return str(csv_path)
     
     def run(self) -> Dict:
@@ -642,7 +648,7 @@ class LamudiProfessionalScraper:
             pages_processed, properties_found = self.scrape_pages()
             
             # Guardar resultados
-            csv_path = self.save_results()
+            csv_path = self.save_results(self.ciudad, self.operacion, self.producto)
             
             # Calcular estadísticas finales
             total_time = datetime.now() - self.start_time
@@ -693,12 +699,18 @@ def main():
                        help='Ejecutar en modo headless (sin GUI)')
     parser.add_argument('--pages', type=int, default=None, 
                        help='Número máximo de páginas a procesar')
-    parser.add_argument('--resume', type=int, default=1, 
+    parser.add_argument('--resume', type=int, default=1,
                        help='Página desde la cual resumir')
     parser.add_argument('--operation', choices=['venta', 'renta'], default='venta',
                        help='Tipo de operación: venta o renta')
-    parser.add_argument('--gui', action='store_true', 
+    parser.add_argument('--gui', action='store_true',
                        help='Ejecutar con GUI (opuesto a --headless)')
+    parser.add_argument('--ciudad', type=str, default='Ciudad',
+                       help='Ciudad para la estructura de salida')
+    parser.add_argument('--operacion', type=str, default='Operacion',
+                       help='Operación para la estructura de salida')
+    parser.add_argument('--producto', type=str, default='Producto',
+                       help='Producto para la estructura de salida')
     
     args = parser.parse_args()
     
@@ -711,7 +723,10 @@ def main():
         headless=args.headless,
         max_pages=args.pages,
         resume_from=args.resume,
-        operation_type=args.operation
+        operation_type=args.operation,
+        ciudad=args.ciudad,
+        operacion=args.operacion,
+        producto=args.producto
     )
     
     results = scraper.run()
