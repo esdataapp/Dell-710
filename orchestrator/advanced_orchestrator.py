@@ -28,8 +28,13 @@ from enhanced_scraps_registry import EnhancedScrapsRegistry
 try:
     sys.path.append(str(Path(__file__).parent.parent / 'scrapers'))
     from inm24 import run_scraper as run_inmuebles24
-    from cyt import run_scraper as run_casas_terrenos  
+    from inm24_det import run_scraper as run_inm24_det
+    from cyt import run_scraper as run_casas_terrenos
     from mit import run_scraper as run_mitula
+    from lam import run_scraper as run_lam
+    from lam_det import run_scraper as run_lam_det
+    from prop import run_scraper as run_prop
+    from tro import run_scraper as run_trovit
     scrapers_available = True
 except ImportError as e:
     logging.warning(f"No se pudieron importar scrapers específicos: {e}")
@@ -84,6 +89,24 @@ class AdvancedOrchestrator:
         self.max_concurrent_websites = 4  # Máximo 4 páginas web simultáneas
         self.max_cpu_usage = 80
         self.max_memory_usage = 80
+
+        # Mapear identificadores de sitios web a sus funciones run_scraper
+        self.scraper_functions = {
+            'inm24': run_inmuebles24,
+            'inm24_det': run_inm24_det,
+            'cyt': run_casas_terrenos,
+            'mit': run_mitula,
+            'lam': run_lam,
+            'lam_det': run_lam_det,
+            'prop': run_prop,
+            'tro': run_trovit,
+        }
+
+        # Dependencias: scraper base -> scraper de detalle
+        self.detail_dependencies = {
+            'inm24': 'inm24_det',
+            'lam': 'lam_det',
+        }
         
         # Archivos de estado
         self.state_file = Path(__file__).parent.parent / 'data' / 'orchestrator_state.json'
@@ -186,27 +209,33 @@ class AdvancedOrchestrator:
             
             # Usar scrapers integrados
             website = scrap['website'].lower()
+            scraper_func = self.scraper_functions.get(website)
+            if not scraper_func:
+                self.logger.error(f"❌ Scraper no disponible para {website}")
+                self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
+                return None
+
             url = scrap['url']
             output_path = self.registry.get_output_path(scrap)
-            
+
             # Crear directorio de salida
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Actualizar registry a running
             self.registry.update_scrap_status(
-                scrap['scrap_id'], 
+                scrap['scrap_id'],
                 'running',
                 last_run=datetime.now().isoformat()
             )
-            
+
             # Ejecutar scraper en hilo separado
             scraper_thread = threading.Thread(
                 target=self.run_scraper_thread,
-                args=(website, url, output_path, scrap),
+                args=(website, scraper_func, url, output_path, scrap),
                 daemon=True
             )
             scraper_thread.start()
-            
+
             return scraper_thread  # Retornar thread como "proceso"
             
         except Exception as e:
@@ -214,41 +243,57 @@ class AdvancedOrchestrator:
             self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
             return None
     
-    def run_scraper_thread(self, website: str, url: str, output_path: str, scrap: Dict):
+    def run_scraper_thread(self, website: str, scraper_func, url: str, output_path: str, scrap: Dict):
         """Ejecutar scraper en hilo separado"""
         try:
             self.logger.info(f"🚀 Ejecutando scraper para {website}: {url}")
-            
-            # Ejecutar scraper correspondiente
-            if website == 'inmuebles24':
-                result = run_inmuebles24(url, output_path, max_pages=None)
-            elif website == 'casas_y_terrenos':
-                result = run_casas_terrenos(url, output_path, max_pages=None)
-            elif website == 'mitula':
-                result = run_mitula(url, output_path, max_pages=None)
+
+            # Ejecutar scraper correspondiente usando la función mapeada
+            if website in {'inm24_det', 'lam_det'}:
+                result = scraper_func(urls_file=url, output_path=output_path)
             else:
-                self.logger.error(f"❌ Scraper no disponible para {website}")
-                result = {'success': False, 'error': 'Scraper not available'}
-            
+                result = scraper_func(url=url, output_path=output_path, max_pages=None)
+
+            # Algunos scrapers retornan listas de resultados
+            if isinstance(result, list):
+                result = result[0] if result else {}
+
             # Actualizar estado según resultado
             if result.get('success', False):
                 self.logger.info(f"✅ Scraper completado: {website}")
                 self.registry.update_scrap_status(
-                    scrap['scrap_id'], 
+                    scrap['scrap_id'],
                     'completed',
                     records_extracted=result.get('properties_found', 0),
                     execution_time_minutes=int(result.get('total_time_seconds', 0) / 60)
                 )
                 self.completed_scrapers.append(scrap)
-                
+
                 # Programar backup si está disponible
                 if self.backup_manager:
                     self.schedule_backup(website, scrap)
+
+                # Verificar si hay scraper de detalle dependiente
+                detail_site = self.detail_dependencies.get(website)
+                if detail_site:
+                    detail_func = self.scraper_functions.get(detail_site)
+                    detail_input = result.get('csv_file', url)
+                    if detail_func and detail_input:
+                        try:
+                            self.logger.info(
+                                f"📥 Ejecutando scraper dependiente {detail_site} con {detail_input}"
+                            )
+                            detail_func(urls_file=detail_input, output_path=None)
+                        except Exception as e:
+                            self.logger.error(
+                                f"❌ Error ejecutando scraper dependiente {detail_site}: {e}"
+                            )
+
             else:
                 self.logger.error(f"❌ Scraper falló: {website}")
                 self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
                 self.failed_scrapers.append(scrap)
-                
+
         except Exception as e:
             self.logger.error(f"❌ Error en scraper thread {website}: {e}")
             self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
