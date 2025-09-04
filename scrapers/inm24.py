@@ -468,10 +468,26 @@ class Inmuebles24ProfessionalScraper:
         operacion = operation or 'Operacion'
         producto = product or 'Producto'
 
+        # Capitalized names for file outputs
+        city_cap = ciudad.capitalize()
+        operation_cap = operacion.capitalize()
+        product_cap = producto.capitalize()
+        run_str = f"{self.run_number:02d}"
+
+        current = datetime.now()
+        month_abbrev = calendar.month_abbr[current.month]
+        year_short = current.strftime("%y")
+
+        # Build main CSV filename with new nomenclature
+        csv_filename = (
+            f"Inm24_{city_cap}_{operation_cap}_{product_cap}_"
+            f"{month_abbrev}{year_short}_{run_str}.csv"
+        )
+
         if self.output_path:
             csv_path = Path(self.output_path)
         else:
-            csv_path = self.run_dir / self.file_name
+            csv_path = self.run_dir / csv_filename
 
         csv_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -485,14 +501,10 @@ class Inmuebles24ProfessionalScraper:
         self.logger.info(f"💾 Resultados guardados en: {csv_path}")
 
         # Guardar URLs recolectadas con nueva nomenclatura
-        current = datetime.now()
-        month_abbrev = calendar.month_abbr[current.month]
-        year_short = current.strftime("%y")
-        city_code = ciudad[:3].upper()
-        op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
-        op_code = op_code_map.get((operation or '').lower(), operacion[:3].upper())
-        product_code = producto[:3].upper()
-        urls_filename = f"I24URL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{run_str}.csv"
+        urls_filename = (
+            f"Inm24URL_{city_cap}_{operation_cap}_{product_cap}_"
+            f"{month_abbrev}{year_short}_{run_str}.csv"
+        )
         urls_path = self.run_dir / urls_filename
         if self.property_urls:
             with open(urls_path, 'w', encoding='utf-8') as f:
