@@ -418,6 +418,9 @@ class ConcurrentScraperManager:
     def start(self):
         """Iniciar el manager de scrapers"""
         self.logger.info("🚀 Iniciando Concurrent Scraper Manager...")
+
+        # Registrar tiempo de inicio
+        self.start_time = datetime.now()
         
         # Iniciar thread de monitoreo de recursos
         self.monitoring_thread = threading.Thread(
@@ -467,7 +470,11 @@ class ConcurrentScraperManager:
             'queue_size': self.scraper_queue.qsize(),
             'max_concurrent': self.max_concurrent,
             'resources': resources,
-            'uptime_seconds': (datetime.now() - datetime.now()).total_seconds() if hasattr(self, 'start_time') else 0
+            'uptime_seconds': (
+                (datetime.now() - self.start_time).total_seconds()
+                if hasattr(self, 'start_time')
+                else 0
+            )
         }
     
     def run_batch_scraping(self, scraper_configs: List[Dict]) -> Dict:
