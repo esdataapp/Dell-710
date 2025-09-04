@@ -25,6 +25,7 @@ from utils.url_utils import (
     load_urls_for_site,
 )
 from utils.path_builder import build_path
+from utils.browser_config import get_chromium_args
 
 # Selenium imports
 from seleniumbase import SB
@@ -147,48 +148,7 @@ class TrovitProfessionalScraper:
             'disable_csp': True,  # Deshabilitar Content Security Policy
             'disable_ws': True,  # Deshabilitar web security
             'block_images': False,  # Permitir imágenes para mejor detección
-            'chromium_arg': [
-                '--no-sandbox',  # Requerido para Ubuntu Server
-                '--disable-dev-shm-usage',  # Evita problemas de memoria compartida
-                '--disable-gpu',  # No usar GPU en headless
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding',
-                '--disable-extensions',
-                '--disable-plugins',
-                '--disable-sync',
-                '--disable-translate',
-                '--hide-scrollbars',
-                '--mute-audio',
-                '--no-first-run',
-                '--safebrowsing-disable-auto-update',
-                '--ignore-ssl-errors',
-                '--ignore-certificate-errors',
-                '--allow-running-insecure-content',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor',
-            ],
-            'chromium_arg': [
-                '--no-sandbox',  # Requerido para Ubuntu Server
-                '--disable-dev-shm-usage',  # Evita problemas de memoria compartida
-                '--disable-gpu',  # No usar GPU en headless
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding',
-                '--disable-extensions',
-                '--disable-plugins',
-                '--disable-sync',
-                '--disable-translate',
-                '--hide-scrollbars',
-                '--mute-audio',
-                '--no-first-run',
-                '--safebrowsing-disable-auto-update',
-                '--ignore-ssl-errors',
-                '--ignore-certificate-errors',
-                '--allow-running-insecure-content',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor',
-            ]
+            'chromium_arg': get_chromium_args()
         }
         
         return sb_config

@@ -24,6 +24,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from utils.path_builder import build_path
+from utils.browser_config import get_chromium_args
 
 class LamudiProfessionalScraper:
     """
@@ -132,27 +133,7 @@ class LamudiProfessionalScraper:
             'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'locale_code': 'es-MX',
             'timeout': 30,
-            'chromium_arg': [
-                '--no-sandbox',  # Requerido para Ubuntu Server
-                '--disable-dev-shm-usage',  # Evita problemas de memoria compartida
-                '--disable-gpu',  # No usar GPU en headless
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding',
-                '--disable-extensions',
-                '--disable-plugins',
-                '--disable-sync',
-                '--disable-translate',
-                '--hide-scrollbars',
-                '--mute-audio',
-                '--no-first-run',
-                '--safebrowsing-disable-auto-update',
-                '--ignore-ssl-errors',
-                '--ignore-certificate-errors',
-                '--allow-running-insecure-content',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor',
-            ]
+            'chromium_arg': get_chromium_args()
         }
         
         return sb_config
