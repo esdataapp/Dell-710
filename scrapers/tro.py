@@ -109,6 +109,7 @@ class TrovitProfessionalScraper:
         self.month_year = path_info.month_year
         self.run_number = int(path_info.run_number)
         self.data_dir = path_info.directory
+        self.file_name = path_info.file_name
 
         for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
@@ -598,17 +599,12 @@ class TrovitProfessionalScraper:
 
         # Generar timestamp para archivos
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        run_str = f"{self.run_number:02d}"
-        current = datetime.now()
-        month_abbrev = calendar.month_abbr[current.month]
-        year_short = current.strftime("%y")
 
         # Usar la ruta proporcionada o crear una con nueva nomenclatura
         if self.output_path:
             csv_path = Path(self.output_path)
         else:
-            csv_filename = f"tro_{month_abbrev}{year_short}_{run_str}.csv"
+            csv_filename = self.file_name
             csv_path = self.data_dir / csv_filename
         
         # Crear directorio si no existe

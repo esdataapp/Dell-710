@@ -102,6 +102,7 @@ class Inmuebles24ProfessionalScraper:
         self.run_number = int(path_info.run_number)
         self.run_dir = path_info.directory
         self.data_dir = self.run_dir
+        self.file_name = path_info.file_name
 
         for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
@@ -463,19 +464,14 @@ class Inmuebles24ProfessionalScraper:
             self.logger.warning("⚠️  No hay datos para guardar")
             return None
 
-        city_cap = (city or 'Ciudad').capitalize()
-        operation_cap = (operation or 'Operacion').capitalize()
-        product_cap = (product or 'Producto').capitalize()
+        ciudad = city or 'Ciudad'
+        operacion = operation or 'Operacion'
+        producto = product or 'Producto'
 
-        run_str = f"{self.run_number:02d}"
         if self.output_path:
             csv_path = Path(self.output_path)
         else:
-            filename = (
-                f"{self.site_name}_{ciudad_cap}_{operacion_cap}_{producto_cap}_"
-                f"{self.month_year}_{run_str}.csv"
-            )
-            csv_path = self.run_dir / filename
+            csv_path = self.run_dir / self.file_name
 
         csv_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -492,10 +488,10 @@ class Inmuebles24ProfessionalScraper:
         current = datetime.now()
         month_abbrev = calendar.month_abbr[current.month]
         year_short = current.strftime("%y")
-        city_code = city_cap[:3].upper()
+        city_code = ciudad[:3].upper()
         op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
-        op_code = op_code_map.get((operation or '').lower(), operation_cap[:3].upper())
-        product_code = product_cap[:3].upper()
+        op_code = op_code_map.get((operation or '').lower(), operacion[:3].upper())
+        product_code = producto[:3].upper()
         urls_filename = f"I24URL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{run_str}.csv"
         urls_path = self.run_dir / urls_filename
         if self.property_urls:

@@ -83,6 +83,7 @@ class LamudiProfessionalScraper:
         self.run_number = int(path_info.run_number)
         self.run_dir = path_info.directory
         self.data_dir = self.run_dir
+        self.file_name = path_info.file_name
 
         for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
@@ -531,15 +532,12 @@ class LamudiProfessionalScraper:
             return None
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        ciudad_cap = (city or 'Ciudad').capitalize()
-        operacion_cap = (operation or 'Operacion').capitalize()
-        producto_cap = (product or 'Producto').capitalize()
+        ciudad = city or 'Ciudad'
+        operacion = operation or 'Operacion'
+        producto = product or 'Producto'
         run_str = f"{self.run_number:02d}"
 
-        csv_filename = (
-            f"{self.site_name}_{ciudad_cap}_{operacion_cap}_{producto_cap}_"
-            f"{self.month_year}_{run_str}.csv"
-        )
+        csv_filename = self.file_name
         csv_path = self.run_dir / csv_filename
 
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
@@ -553,10 +551,10 @@ class LamudiProfessionalScraper:
         current = datetime.now()
         month_abbrev = calendar.month_abbr[current.month]
         year_short = current.strftime("%y")
-        city_code = ciudad_cap[:3].upper()
+        city_code = ciudad[:3].upper()
         op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
-        op_code = op_code_map.get((operation or '').lower(), operacion_cap[:3].upper())
-        product_code = producto_cap[:3].upper()
+        op_code = op_code_map.get((operation or '').lower(), operacion[:3].upper())
+        product_code = producto[:3].upper()
         urls_filename = f"LAMURL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{run_str}.csv"
         urls_path = self.run_dir / urls_filename
         if self.property_urls:
