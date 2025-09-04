@@ -1,28 +1,24 @@
 #!/usr/bin/env python3
-"""Display scraping status based on URL CSVs and orchestrator state.
+"""Display scraping status based solely on URL CSV information.
 
 The script inspects CSV files in ``URLs/`` to determine all available
-scraping tasks. It then checks the ``data/`` directory for completed run
-folders (``01``/``02``) for the current month and reads
-``data/orchestrator_state.json`` to discover active tasks. Remaining
-tasks are considered queued. Results can be filtered and sorted by
+scraping tasks, loading progress metadata such as ``Status``, ``LastRun``
+and ``NextRun`` directly from those files. Based on this information
+tasks are classified into "completed", "running", "queued" and
+"never-run" (no ``LastRun`` value). Results can be filtered and sorted by
 ``PaginaWeb`` and ``Ciudad``.
 """
 from __future__ import annotations
 
 import argparse
-import calendar
 import csv
-import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 URLS_DIR = PROJECT_ROOT / "URLs"
-DATA_DIR = PROJECT_ROOT / "data"
-STATE_FILE = DATA_DIR / "orchestrator_state.json"
 
 
 @dataclass
@@ -35,6 +31,8 @@ class ScrapEntry:
     producto: str
     url: str
     status: str = ""
+    last_run: str = ""
+    next_run: str = ""
     scrap_of_month: str = ""
     records: int = 0
 
@@ -56,7 +54,9 @@ def load_urls() -> List[ScrapEntry]:
 
     for csv_file in URLS_DIR.glob("*.csv"):
         with open(csv_file, "r", encoding="utf-8-sig") as f:
-            reader = csv.DictReader(row for row in f if not row.lstrip().startswith("#"))
+            reader = csv.DictReader(
+                row for row in f if not row.lstrip().startswith("#")
+            )
             for row in reader:
                 pagina = row.get("PaginaWeb", "").strip()
                 ciudad = row.get("Ciudad", "").strip()
@@ -64,6 +64,8 @@ def load_urls() -> List[ScrapEntry]:
                 producto = row.get("ProductoPaginaWeb", "").strip()
                 url = row.get("URL", "").strip()
                 status = row.get("Status", "").strip()
+                last_run = row.get("LastRun", "").strip()
+                next_run = row.get("NextRun", "").strip()
                 scrap_of_month = row.get("ScrapOfMonth", "").strip()
                 records_str = row.get("Records", "").strip()
                 try:
@@ -79,47 +81,13 @@ def load_urls() -> List[ScrapEntry]:
                             producto=producto,
                             url=url,
                             status=status,
+                            last_run=last_run,
+                            next_run=next_run,
                             scrap_of_month=scrap_of_month,
                             records=records,
                         )
                     )
     return scraps
-
-
-def current_month_year() -> str:
-    """Return month abbreviation and two-digit year (e.g. ``Jan25``)."""
-    now = datetime.now()
-    month_abbr = calendar.month_abbr[now.month]
-    year_short = str(now.year)[-2:]
-    return f"{month_abbr}{year_short}"
-
-
-def find_completed_runs(scrap: ScrapEntry, month_year: str) -> List[str]:
-    """Return a list of completed run numbers (``01``/``02``)."""
-    base = (
-        DATA_DIR
-        / scrap.pagina_web.capitalize()
-        / scrap.ciudad.capitalize()
-        / scrap.operacion.capitalize()
-        / scrap.producto.capitalize()
-        / month_year
-    )
-    runs = []
-    for run in ["01", "02"]:
-        if (base / run).exists():
-            runs.append(run)
-    return runs
-
-
-def load_state() -> Dict:
-    """Load orchestrator state if available."""
-    if STATE_FILE.exists():
-        with open(STATE_FILE, "r", encoding="utf-8") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-    return {}
 
 
 def main() -> None:
@@ -142,25 +110,28 @@ def main() -> None:
     sort_attr = "pagina_web" if args.sort == "PaginaWeb" else "ciudad"
     scraps.sort(key=lambda s: getattr(s, sort_attr).lower())
 
-    month_year = current_month_year()
-    state = load_state()
-    active_websites = set(state.get("active_websites", []))
+    month_year = datetime.now().strftime("%b%y")
 
-    completed: List[Tuple[ScrapEntry, List[str]]] = []
+    completed: List[ScrapEntry] = []
     running: List[ScrapEntry] = []
     queued: List[ScrapEntry] = []
+    never_run: List[ScrapEntry] = []
+
+    status_completed = {"completed", "success", "done"}
+    status_running = {"running", "in_progress"}
 
     for scrap in scraps:
-        runs = find_completed_runs(scrap, month_year)
-        if runs:
-            completed.append((scrap, runs))
-        elif scrap.pagina_web in active_websites:
+        status = scrap.status.lower()
+        if not scrap.last_run:
+            never_run.append(scrap)
+        elif status in status_completed:
+            completed.append(scrap)
+        elif status in status_running:
             running.append(scrap)
         else:
             queued.append(scrap)
 
     # Determine "Scrap of the Month" based on completed tasks.
-    status_completed = {"completed", "success", "done"}
     completed_tasks = [s for s in scraps if s.status.lower() in status_completed]
     scrap_of_month: Optional[ScrapEntry] = None
     if completed_tasks:
@@ -171,11 +142,11 @@ def main() -> None:
 
     print(f"\n=== SCRAP STATUS ({month_year}) ===\n")
     if completed:
-        print("✅ Completed runs:")
-        for scrap, runs in completed:
-            run_str = ", ".join(runs)
+        print("✅ Completed:")
+        for scrap in completed:
             print(
-                f"   {scrap.pagina_web:8} | {scrap.ciudad:10} | {scrap.operacion:6} | {scrap.producto:12} | runs: {run_str}"
+                f"   {scrap.pagina_web:8} | {scrap.ciudad:10} | {scrap.operacion:6} | {scrap.producto:12} | "
+                f"last: {scrap.last_run or '-'} | next: {scrap.next_run or '-'}"
             )
         print()
 
@@ -183,7 +154,8 @@ def main() -> None:
         print("🏃 Currently running:")
         for scrap in running:
             print(
-                f"   {scrap.pagina_web:8} | {scrap.ciudad:10} | {scrap.operacion:6} | {scrap.producto:12}"
+                f"   {scrap.pagina_web:8} | {scrap.ciudad:10} | {scrap.operacion:6} | {scrap.producto:12} | "
+                f"last: {scrap.last_run or '-'} | next: {scrap.next_run or '-'}"
             )
         print()
 
@@ -191,7 +163,17 @@ def main() -> None:
         print("⏳ Queued:")
         for scrap in queued:
             print(
-                f"   {scrap.pagina_web:8} | {scrap.ciudad:10} | {scrap.operacion:6} | {scrap.producto:12}"
+                f"   {scrap.pagina_web:8} | {scrap.ciudad:10} | {scrap.operacion:6} | {scrap.producto:12} | "
+                f"last: {scrap.last_run or '-'} | next: {scrap.next_run or '-'}"
+            )
+        print()
+
+    if never_run:
+        print("🆕 Never run:")
+        for scrap in never_run:
+            print(
+                f"   {scrap.pagina_web:8} | {scrap.ciudad:10} | {scrap.operacion:6} | {scrap.producto:12} | "
+                f"next: {scrap.next_run or '-'}"
             )
         print()
 
