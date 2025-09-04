@@ -34,6 +34,9 @@ class ScrapEntry:
     operacion: str
     producto: str
     url: str
+    status: str = ""
+    scrap_of_month: str = ""
+    records: int = 0
 
     @property
     def key(self) -> Tuple[str, str, str, str]:
@@ -60,6 +63,13 @@ def load_urls() -> List[ScrapEntry]:
                 operacion = row.get("Operacion", row.get("Operación", "")).strip()
                 producto = row.get("ProductoPaginaWeb", "").strip()
                 url = row.get("URL", "").strip()
+                status = row.get("Status", "").strip()
+                scrap_of_month = row.get("ScrapOfMonth", "").strip()
+                records_str = row.get("Records", "").strip()
+                try:
+                    records = int(records_str)
+                except ValueError:
+                    records = 0
                 if pagina and ciudad and operacion and producto:
                     scraps.append(
                         ScrapEntry(
@@ -68,6 +78,9 @@ def load_urls() -> List[ScrapEntry]:
                             operacion=operacion,
                             producto=producto,
                             url=url,
+                            status=status,
+                            scrap_of_month=scrap_of_month,
+                            records=records,
                         )
                     )
     return scraps
@@ -126,7 +139,8 @@ def main() -> None:
         scraps = [s for s in scraps if s.pagina_web.lower() == args.pagina_web.lower()]
     if args.ciudad:
         scraps = [s for s in scraps if s.ciudad.lower() == args.ciudad.lower()]
-    scraps.sort(key=lambda s: getattr(s, args.sort.lower()))
+    sort_attr = "pagina_web" if args.sort == "PaginaWeb" else "ciudad"
+    scraps.sort(key=lambda s: getattr(s, sort_attr).lower())
 
     month_year = current_month_year()
     state = load_state()
@@ -145,13 +159,15 @@ def main() -> None:
         else:
             queued.append(scrap)
 
+    # Determine "Scrap of the Month" based on completed tasks.
+    status_completed = {"completed", "success", "done"}
+    completed_tasks = [s for s in scraps if s.status.lower() in status_completed]
     scrap_of_month: Optional[ScrapEntry] = None
-    if queued:
-        scrap_of_month = queued[0]
-    elif running:
-        scrap_of_month = running[0]
-    elif completed:
-        scrap_of_month = completed[0][0]
+    if completed_tasks:
+        current_marker = datetime.now().strftime("%Y-%m")
+        marked = [s for s in completed_tasks if s.scrap_of_month == current_marker]
+        candidates = marked or completed_tasks
+        scrap_of_month = max(candidates, key=lambda s: s.records)
 
     print(f"\n=== SCRAP STATUS ({month_year}) ===\n")
     if completed:
@@ -182,8 +198,9 @@ def main() -> None:
     if scrap_of_month:
         print("🌟 Scrap of the Month:")
         print(
-            f"   {scrap_of_month.pagina_web} | {scrap_of_month.ciudad} | "
-            f"{scrap_of_month.operacion} | {scrap_of_month.producto}"
+            f"   {scrap_of_month.pagina_web:8} | {scrap_of_month.ciudad:10} | "
+            f"{scrap_of_month.operacion:6} | {scrap_of_month.producto:12} | "
+            f"records: {scrap_of_month.records} | month: {scrap_of_month.scrap_of_month}"
         )
     else:
         print("No scraps found.")
