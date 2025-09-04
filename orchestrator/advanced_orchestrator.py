@@ -81,7 +81,8 @@ class AdvancedOrchestrator:
         
         # Estado del orquestador
         self.running = False
-        self.active_scrapers = {}  # {website: {process, scrap_info}}
+        # {website: {thread, scrap, started_at, result}}
+        self.active_scrapers = {}
         self.completed_scrapers = []
         self.failed_scrapers = []
         
@@ -200,7 +201,7 @@ class AdvancedOrchestrator:
         
         return website_scraps
     
-    def start_scraper_for_scrap(self, scrap: Dict) -> Optional[subprocess.Popen]:
+    def start_scraper_for_scrap(self, scrap: Dict) -> Optional[threading.Thread]:
         """Iniciar un scraper para un scrap específico usando scrapers integrados"""
         try:
             if not scrapers_available:
@@ -230,20 +231,21 @@ class AdvancedOrchestrator:
             # Ejecutar scraper en hilo separado
             scraper_thread = threading.Thread(
                 target=self.run_scraper_thread,
-                args=(website, scraper_func, url, output_path, scrap),
+                args=(website, scraper_func, url, output_path),
                 daemon=True
             )
             scraper_thread.start()
 
-            return scraper_thread  # Retornar thread como "proceso"
+            return scraper_thread  # Retornar thread para monitoreo
             
         except Exception as e:
             self.logger.error(f"❌ Error iniciando scraper para {scrap['website']}: {e}")
             self.registry.update_scrap_execution(scrap['id'], 'failed')
             return None
     
-    def run_scraper_thread(self, website: str, scraper_func, url: str, output_path: str, scrap: Dict):
-        """Ejecutar scraper en hilo separado"""
+    def run_scraper_thread(self, website: str, scraper_func, url: str, output_path: str):
+        """Ejecutar scraper en hilo separado y almacenar el resultado en el hilo."""
+        thread = threading.current_thread()
         try:
             self.logger.info(f"🚀 Ejecutando scraper para {website}: {url}")
 
@@ -257,22 +259,11 @@ class AdvancedOrchestrator:
             if isinstance(result, list):
                 result = result[0] if result else {}
 
-            # Actualizar estado según resultado
+            # Guardar resultado en el hilo para su posterior procesamiento
+            thread.result = result
+
+            # Verificar si hay scraper de detalle dependiente
             if result.get('success', False):
-                self.logger.info(f"✅ Scraper completado: {website}")
-                self.registry.update_scrap_execution(
-                    scrap['id'],
-                    'completed',
-                    records_extracted=result.get('properties_found', 0),
-                    execution_time_minutes=int(result.get('total_time_seconds', 0) / 60)
-                )
-                self.completed_scrapers.append(scrap)
-
-                # Programar backup si está disponible
-                if self.backup_manager:
-                    self.schedule_backup(website, scrap)
-
-                # Verificar si hay scraper de detalle dependiente
                 detail_site = self.detail_dependencies.get(website)
                 if detail_site:
                     detail_func = self.scraper_functions.get(detail_site)
@@ -288,15 +279,10 @@ class AdvancedOrchestrator:
                                 f"❌ Error ejecutando scraper dependiente {detail_site}: {e}"
                             )
 
-            else:
-                self.logger.error(f"❌ Scraper falló: {website}")
-                self.registry.update_scrap_execution(scrap['id'], 'failed')
-                self.failed_scrapers.append(scrap)
-
         except Exception as e:
+            # Registrar el error y almacenar estado de fallo en el hilo
             self.logger.error(f"❌ Error en scraper thread {website}: {e}")
-            self.registry.update_scrap_execution(scrap['id'], 'failed')
-            self.failed_scrapers.append(scrap)
+            thread.result = {'success': False, 'error': str(e)}
     
     def start_scraper_subprocess(self, scrap: Dict) -> Optional[subprocess.Popen]:
         """Método de respaldo usando subprocess"""
@@ -358,37 +344,40 @@ class AdvancedOrchestrator:
     def monitor_active_scrapers(self):
         """Monitorear scrapers activos y manejar completaciones/fallos"""
         completed_websites = []
-        
-        for website, scraper_info in self.active_scrapers.items():
-            process = scraper_info['process']
+
+        for website, scraper_info in list(self.active_scrapers.items()):
+            thread = scraper_info['thread']
             scrap = scraper_info['scrap']
-            
-            # Verificar si el proceso terminó
-            if process.poll() is not None:
-                # Proceso terminado
-                return_code = process.returncode
-                
-                if return_code == 0:
-                    # Éxito
+
+            # Verificar si el hilo terminó
+            if not thread.is_alive():
+                # Asegurar que el hilo haya finalizado completamente
+                thread.join()
+                result = getattr(thread, 'result', {'success': False})
+
+                # Guardar resultado en la entrada del scraper
+                scraper_info['result'] = result
+
+                if result.get('success', False):
                     self.logger.info(f"✅ Scraper completado exitosamente: {website}")
                     self.registry.update_scrap_execution(
                         scrap['id'],
                         'completed',
-                        execution_time_minutes=int((datetime.now() - datetime.fromisoformat(scrap['last_run'])).total_seconds() / 60)
+                        records_extracted=result.get('properties_found', 0),
+                        execution_time_minutes=int(result.get('total_time_seconds', 0) / 60)
                     )
                     self.completed_scrapers.append(scrap)
-                    
+
                     # Programar backup
                     self.schedule_backup(website, scrap)
-                    
+
                 else:
-                    # Error
-                    self.logger.error(f"❌ Scraper falló: {website} (código: {return_code})")
+                    self.logger.error(f"❌ Scraper falló: {website}")
                     self.registry.update_scrap_execution(scrap['id'], 'failed')
                     self.failed_scrapers.append(scrap)
-                
+
                 completed_websites.append(website)
-        
+
         # Remover scrapers completados
         for website in completed_websites:
             del self.active_scrapers[website]
@@ -556,23 +545,27 @@ class AdvancedOrchestrator:
                 continue
             
             # Iniciar scraper
-            process = self.start_scraper_for_scrap(scrap)
-            if process:
+            thread = self.start_scraper_for_scrap(scrap)
+            if thread:
                 # Registrar scraper activo
                 self.active_scrapers[website] = {
-                    'process': process,
+                    'thread': thread,
                     'scrap': scrap,
-                    'started_at': datetime.now()
+                    'started_at': datetime.now(),
+                    'result': None
                 }
-                
+
                 # Esperar a que termine este scraper antes del siguiente
-                while process.poll() is None and self.running:
+                while thread.is_alive() and self.running:
                     time.sleep(30)  # Verificar cada 30 segundos
                     self.display_progress()
-                
+
+                # Asegurarse de que el hilo haya finalizado
+                thread.join()
+
                 # Manejar resultado
                 self.monitor_active_scrapers()
-                
+
                 # Pausa entre scraps para evitar sobrecarga
                 time.sleep(10)
         
@@ -687,27 +680,19 @@ class AdvancedOrchestrator:
         
         # Terminar scrapers activos de forma gradual
         for website, scraper_info in self.active_scrapers.items():
-            process = scraper_info['process']
+            thread = scraper_info['thread']
             scrap = scraper_info['scrap']
-            
+
             self.logger.info(f"⏹️ Terminando scraper: {website}")
-            
+
             try:
-                # Enviar SIGTERM primero (apagado gradual)
-                process.terminate()
-                
-                # Esperar un poco para apagado gradual
-                try:
-                    process.wait(timeout=30)
-                except subprocess.TimeoutExpired:
-                    # Si no termina, forzar
-                    self.logger.warning(f"🔪 Forzando terminación: {website}")
-                    process.kill()
-                    process.wait()
-                
+                # Esperar a que el hilo termine de forma natural
+                if thread.is_alive():
+                    thread.join(timeout=30)
+
                 # Actualizar estado a pausado para reanudar después
                 self.registry.update_scrap_execution(scrap['id'], 'paused')
-                
+
             except Exception as e:
                 self.logger.error(f"❌ Error terminando {website}: {e}")
         
