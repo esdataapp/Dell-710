@@ -70,7 +70,9 @@ class PropiedadesProfessionalScraper:
     Optimizado para ejecución en Dell T710 Ubuntu Server
     """
     
-    def __init__(self, headless=True, max_pages=None, resume_from=None, operation_type='venta'):
+    def __init__(self, output_path=None, headless=True, max_pages=None,
+                 resume_from=None, operation_type='venta'):
+        self.output_path = output_path
         self.headless = headless
         self.max_pages = max_pages
         self.resume_from = resume_from or 1
@@ -101,6 +103,7 @@ class PropiedadesProfessionalScraper:
         self.errors_count = 0
         
         self.logger.info(f"🚀 Iniciando Propiedades Professional Scraper")
+        self.logger.info(f"   Archivo salida: {output_path}")
         self.logger.info(f"   Operation: {operation_type}")
         self.logger.info(f"   Max pages: {max_pages}")
         self.logger.info(f"   Resume from: {resume_from}")
@@ -477,9 +480,16 @@ class PropiedadesProfessionalScraper:
         # Generar timestamp para archivos
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-        # Archivo CSV principal con nueva nomenclatura
-        csv_filename = self.file_name
-        csv_path = self.data_dir / csv_filename
+        # Archivo CSV principal con nueva nomenclatura o ruta proporcionada
+        if self.output_path:
+            csv_path = Path(self.output_path)
+            csv_filename = csv_path.name
+        else:
+            csv_filename = self.file_name
+            csv_path = self.data_dir / csv_filename
+
+        # Asegurar que el directorio exista
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Guardar CSV
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
@@ -622,9 +632,21 @@ def main():
     sys.exit(0 if success else 1)
 
 
-def run_scraper(url: str = None, max_pages: int = None,
-                urls_file: str = None) -> List[Dict]:
-    """Interface function for orchestrator to handle multiple URLs."""
+def run_scraper(url: str = None, output_path: str | None = None,
+                max_pages: int = None, urls_file: str = None) -> List[Dict]:
+    """Interface function for orchestrator to handle multiple URLs.
+
+    Parameters
+    ----------
+    url : str | None
+        URL única a procesar.
+    output_path : str | None
+        Ruta donde se almacenará el CSV resultante.
+    max_pages : int | None
+        Número máximo de páginas a procesar.
+    urls_file : str | None
+        Archivo CSV con URLs a procesar.
+    """
     if url:
         urls = [url]
     else:
@@ -636,6 +658,7 @@ def run_scraper(url: str = None, max_pages: int = None,
     results: List[Dict] = []
     for target in urls:
         scraper = PropiedadesProfessionalScraper(
+            output_path=output_path,
             headless=True,
             max_pages=max_pages,
             resume_from=1,

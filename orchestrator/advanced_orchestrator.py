@@ -3,6 +3,8 @@
 Advanced Orchestrator - PropertyScraper Dell710
 Orquestador avanzado con lógica de flujo de trabajo según especificaciones
 Adaptado para trabajar con los archivos CSV individuales ubicados en ``URLs/``
+Cada scraper expone ``run_scraper(url, output_path, ...)`` para permitir al
+orquestador definir la ruta donde se guardan los CSV.
 """
 
 import os
@@ -24,7 +26,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 sys.path.append(str(Path(__file__).parent.parent / 'utils'))
 from enhanced_scraps_registry import EnhancedScrapsRegistry
 
-# Importar scrapers específicos
+# Importar scrapers específicos (todos aceptan ``output_path``)
 try:
     sys.path.append(str(Path(__file__).parent.parent / 'scrapers'))
     from inm24 import run_scraper as run_inmuebles24
@@ -33,7 +35,7 @@ try:
     from mit import run_scraper as run_mitula
     from lam import run_scraper as run_lam
     from lam_det import run_scraper as run_lam_det
-    from prop import run_scraper as run_prop
+    from prop import run_scraper as run_prop  # acepta ``output_path``
     from tro import run_scraper as run_trovit
     scrapers_available = True
 except ImportError as e:
