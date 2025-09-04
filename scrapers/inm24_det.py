@@ -13,6 +13,7 @@ import csv
 import logging
 import pickle
 import calendar
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -26,27 +27,73 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
+
+def parse_urls_metadata(urls_file: str) -> Optional[Tuple[str, str, str, str, str]]:
+    """Extraer metadatos del nombre del archivo de URLs.
+
+    Retorna una tupla con (ciudad, operacion, producto, mes_anio, run)
+    si el nombre sigue el patrón esperado. En caso contrario, retorna ``None``.
+    """
+    pattern = (
+        r"Inm24URL_(?P<city>[^_]+)_(?P<oper>[^_]+)_"
+        r"(?P<prod>[^_]+)_(?P<month>[A-Za-z]{3}\d{2})_(?P<run>\d{2})\.csv"
+    )
+    match = re.match(pattern, Path(urls_file).name)
+    if match:
+        return (
+            match.group('city'),
+            match.group('oper'),
+            match.group('prod'),
+            match.group('month'),
+            match.group('run'),
+        )
+    return None
+
+
+def map_operation_code(code: str) -> str:
+    """Mapear código de operación a nombre descriptivo."""
+    mapping = {
+        'VEN': 'venta',
+        'REN': 'renta',
+        'VND': 'venta-d',
+        'VNR': 'venta-r',
+    }
+    return mapping.get(code.upper(), code.lower())
+
 class Inmuebles24UnicoProfessionalScraper:
     """
     Scraper profesional para detalles de propiedades individuales de inmuebles24.com
     Segunda fase del proceso de scraping - procesa URLs individuales
     """
-    
-    def __init__(self, urls_file=None, headless=True, max_properties=None, resume_from=None, operation_type='venta'):
+
+    def __init__(
+        self,
+        urls_file: str | None = None,
+        headless: bool = True,
+        max_properties: int | None = None,
+        resume_from: int | None = None,
+        operation_type: str | None = 'venta',
+        city: str | None = None,
+        operation: str | None = None,
+        product: str | None = None,
+    ):
         self.urls_file = urls_file
         self.headless = headless
         self.max_properties = max_properties
         self.resume_from = resume_from or 0
         self.operation_type = operation_type
-        
+        self.city = city
+        self.operation_code = operation
+        self.product = product
+
         # Configuración de paths
         self.setup_paths()
-        
+
         # Configuración de logging
         self.setup_logging()
-        
+
         # Checkpoint system
-        self.checkpoint_file = self.checkpoint_dir / f"inmuebles24_unico_{operation_type}_checkpoint.pkl"
+        self.checkpoint_file = self.checkpoint_dir / f"inmuebles24_unico_{self.operation_type}_checkpoint.pkl"
         self.checkpoint_interval = 25  # Guardar cada 25 propiedades procesadas
         
         # Cargar URLs
@@ -59,10 +106,10 @@ class Inmuebles24UnicoProfessionalScraper:
         self.successful_extractions = 0
         self.errors_count = 0
         
-        self.logger.info(f"🚀 Iniciando Inmuebles24 Unico Professional Scraper")
+        self.logger.info("🚀 Iniciando Inmuebles24 Unico Professional Scraper")
         self.logger.info(f"   URLs file: {urls_file}")
         self.logger.info(f"   Total URLs: {len(self.property_urls)}")
-        self.logger.info(f"   Operation: {operation_type}")
+        self.logger.info(f"   Operation: {self.operation_type}")
         self.logger.info(f"   Max properties: {max_properties}")
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
@@ -73,11 +120,32 @@ class Inmuebles24UnicoProfessionalScraper:
         self.logs_dir = self.project_root / 'logs'
         self.checkpoint_dir = self.logs_dir / 'checkpoints'
 
-        path_info = build_path('Inm24', 'Ciudad', self.operation_type, 'Detalle')
-        self.month_year = path_info.month_year
-        self.run_number = int(path_info.run_number)
-        self.data_dir = path_info.directory
-        self.file_name = path_info.file_name
+        # Intentar derivar metadatos desde el archivo de URLs
+        metadata = parse_urls_metadata(self.urls_file) if self.urls_file else None
+
+        if metadata:
+            city, oper, prod, month_year, run_number = metadata
+            self.city = city
+            self.operation_code = oper
+            self.product = prod
+            self.month_year = month_year
+            self.run_number = run_number
+            self.operation_type = map_operation_code(oper)
+            self.data_dir = Path(self.urls_file).parent
+            self.file_name = (
+                f"Inm24_{city}_{oper}_{prod}_{month_year}_{run_number}.csv"
+            )
+        else:
+            city = self.city or 'Ciudad'
+            oper = self.operation_code or (self.operation_type or 'Operacion')
+            prod = self.product or 'Producto'
+            path_info = build_path('Inm24', city, oper, prod)
+            self.month_year = path_info.month_year
+            self.run_number = path_info.run_number
+            self.data_dir = path_info.directory
+            self.file_name = path_info.file_name
+            if not self.operation_type:
+                self.operation_type = map_operation_code(oper)
 
         for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
@@ -102,48 +170,26 @@ class Inmuebles24UnicoProfessionalScraper:
         self.log_file = log_file
     
     def load_urls(self) -> List[str]:
-        """Cargar URLs desde archivo o desde el CSV más reciente de inmuebles24_professional"""
-        urls = []
-        
+        """Cargar URLs desde archivo de texto o CSV."""
+        urls: List[str] = []
+
         if not self.urls_file:
-            # Buscar el CSV más reciente del primer script (I24_URLs_*.csv)
-            pattern = f"I24_URLs_*.csv"
-            csv_files = list(self.data_dir.glob(f"**/{pattern}"))
-            if csv_files:
-                latest_csv = max(csv_files, key=lambda x: x.stat().st_mtime)
-                self.logger.info(f"📂 Usando CSV más reciente: {latest_csv}")
-                
-                # Extraer URLs del CSV
-                try:
-                    import pandas as pd
-                    df = pd.read_csv(latest_csv)
-                    if 'link' in df.columns:
-                        urls = df['link'].dropna().tolist()
-                        self.logger.info(f"📂 Extraídas {len(urls)} URLs del CSV")
-                    else:
-                        self.logger.error("❌ Columna 'link' no encontrada en el CSV")
-                except Exception as e:
-                    self.logger.error(f"❌ Error leyendo CSV: {e}")
+            pattern = "Inm24URL_*.csv"
+            url_files = list(self.data_dir.glob(pattern))
+            if url_files:
+                self.urls_file = max(url_files, key=lambda x: x.stat().st_mtime)
+                self.logger.info(f"📂 Usando archivo de URLs: {self.urls_file}")
             else:
-                # Buscar archivo de URLs de texto con nueva nomenclatura
-                pattern = f"I24_URLs_*.txt"
-                url_files = list(self.data_dir.glob(f"**/{pattern}"))
-                if url_files:
-                    self.urls_file = max(url_files, key=lambda x: x.stat().st_mtime)
-                    self.logger.info(f"📂 Usando archivo de URLs: {self.urls_file}")
-                else:
-                    self.logger.error("❌ No se encontró archivo de URLs ni CSV")
-                    return []
-        
-        # Si tenemos archivo de URLs específico, usarlo
-        if self.urls_file and not urls:
-            try:
-                with open(self.urls_file, 'r', encoding='utf-8') as f:
-                    urls = [line.strip() for line in f if line.strip()]
-                self.logger.info(f"📂 Cargadas {len(urls)} URLs desde {self.urls_file}")
-            except Exception as e:
-                self.logger.error(f"❌ Error cargando URLs: {e}")
-        
+                self.logger.error("❌ No se encontró archivo de URLs")
+                return []
+
+        try:
+            with open(self.urls_file, 'r', encoding='utf-8') as f:
+                urls = [line.strip() for line in f if line.strip()]
+            self.logger.info(f"📂 Cargadas {len(urls)} URLs desde {self.urls_file}")
+        except Exception as e:
+            self.logger.error(f"❌ Error cargando URLs: {e}")
+
         return urls
     
     def create_professional_driver(self):
@@ -1012,26 +1058,25 @@ class Inmuebles24UnicoProfessionalScraper:
                 'successful_extractions': self.successful_extractions
             }
 
-def run_scraper(urls_file: str, output_path: str | None = None,
-                max_properties: int = None) -> Dict:
+def run_scraper(
+    urls_file: str,
+    output_path: str | None = None,
+    max_properties: int | None = None,
+    city: str | None = None,
+    operation: str | None = None,
+    product: str | None = None,
+) -> Dict:
     """Interface function for orchestrator usage."""
-
-    operation_type = 'venta'
-    if urls_file:
-        name = Path(urls_file).name.upper()
-        if '_REN_' in name:
-            operation_type = 'renta'
-        elif '_VND_' in name:
-            operation_type = 'venta-d'
-        elif '_VNR_' in name:
-            operation_type = 'venta-r'
 
     scraper = Inmuebles24UnicoProfessionalScraper(
         urls_file=urls_file,
         headless=True,
         max_properties=max_properties,
         resume_from=0,
-        operation_type=operation_type,
+        operation_type=None,
+        city=city,
+        operation=operation,
+        product=product,
     )
 
     return scraper.run()
@@ -1047,8 +1092,14 @@ def main():
                        help='Número máximo de propiedades a procesar')
     parser.add_argument('--resume', type=int, default=0, 
                        help='Índice desde el cual resumir')
-    parser.add_argument('--operation', choices=['venta', 'renta'], default='venta',
-                       help='Tipo de operación: venta o renta')
+    parser.add_argument('--operation', choices=['venta', 'renta', 'venta-d', 'venta-r'], default='venta',
+                       help='Tipo de operación: venta, renta, venta-d o venta-r')
+    parser.add_argument('--city', type=str, default=None,
+                       help='Ciudad para la estructura de salida si no se puede derivar')
+    parser.add_argument('--oper', type=str, default=None,
+                       help='Código de operación (Ven, Ren, Vnd, Vnr) si no se puede derivar')
+    parser.add_argument('--product', type=str, default=None,
+                       help='Producto para la estructura de salida si no se puede derivar')
     parser.add_argument('--gui', action='store_true', 
                        help='Ejecutar con GUI (opuesto a --headless)')
     
@@ -1067,7 +1118,10 @@ def main():
         headless=args.headless,
         max_properties=args.properties,
         resume_from=args.resume,
-        operation_type=args.operation
+        operation_type=args.operation,
+        city=args.city,
+        operation=args.oper,
+        product=args.product,
     )
     
     results = scraper.run()
