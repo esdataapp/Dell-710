@@ -116,7 +116,6 @@ class PropiedadesProfessionalScraper:
         # Configuración específica para Dell T710
         sb_config = {
             'headless': self.headless,
-            'no_sandbox': True,
             'disable_dev_shm_usage': True,
             'disable_gpu': True,
             'disable_features': 'VizDisplayCompositor',
@@ -129,7 +128,28 @@ class PropiedadesProfessionalScraper:
             'window_size': "1920,1080" if self.headless else None,
             'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'locale_code': 'es-MX',
-            'timeout': 30
+            'timeout': 30,
+            'chromium_arg': [
+                '--no-sandbox',  # Requerido para Ubuntu Server
+                '--disable-dev-shm-usage',  # Evita problemas de memoria compartida
+                '--disable-gpu',  # No usar GPU en headless
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-extensions',
+                '--disable-plugins',
+                '--disable-sync',
+                '--disable-translate',
+                '--hide-scrollbars',
+                '--mute-audio',
+                '--no-first-run',
+                '--safebrowsing-disable-auto-update',
+                '--ignore-ssl-errors',
+                '--ignore-certificate-errors',
+                '--allow-running-insecure-content',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+            ]
         }
         
         return sb_config
