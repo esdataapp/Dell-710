@@ -1,43 +1,6 @@
 #!/usr/bin/env python3
 """
-Propiedades.com Professional Scraper - PropertyScraper Dell710
-Scraper profesional optimizado para Dell T710 con ca        # Configuración específica para Dell T710
-        sb_config = {
-            'headless': self.headless,
-            'disable_dev_shm_usage': True,
-            'disable_gpu': True,
-            'disable_features': 'VizDisplayCompositor',
-            'disable_extensions': True,
-            'disable_plugins': True,
-            'disable_images': False,  # Mantener imágenes para mejor detección
-            'disable_javascript': False,
-            'block_images': False,
-            'maximize_window': not self.headless,
-            'window_size': "1920,1080" if self.headless else None,
-            'user_agent': random.choice(self.user_agents),
-            'locale_code': 'es-MX',
-            'timeout': 30,
-            'chromium_arg': [
-                '--no-sandbox',  # Requerido para Ubuntu Server
-                '--disable-dev-shm-usage',  # Evita problemas de memoria compartida
-                '--disable-gpu',  # No usar GPU en headless
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding',
-                '--disable-extensions',
-                '--disable-plugins',
-                '--disable-sync',
-                '--disable-translate',
-                '--hide-scrollbars',
-                '--mute-audio',
-                '--no-first-run',
-                '--safebrowsing-disable-auto-update',
-                '--ignore-ssl-errors',
-                '--ignore-certificate-errors',
-                '--allow-running-insecure-content',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor',
-            ]lencia
+Scraper profesional para propiedades.com optimizado para el servidor Dell T710.
 """
 
 import os
