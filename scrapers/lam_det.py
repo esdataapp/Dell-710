@@ -12,7 +12,6 @@ import time
 import csv
 import logging
 import pickle
-import calendar
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -24,7 +23,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from utils.path_builder import build_path
 
 class LamudiUnicoProfessionalScraper:
     """
@@ -32,37 +30,50 @@ class LamudiUnicoProfessionalScraper:
     Segunda fase del proceso de scraping - procesa URLs individuales
     """
     
-    def __init__(self, urls_file=None, headless=True, max_properties=None, resume_from=None, operation_type='venta'):
-        self.urls_file = urls_file
+    def __init__(
+        self,
+        urls_file: Optional[str] = None,
+        headless: bool = True,
+        max_properties: Optional[int] = None,
+        resume_from: Optional[int] = None,
+        city: Optional[str] = None,
+        operation_type: Optional[str] = None,
+        product: Optional[str] = None,
+    ):
+        self.urls_file = Path(urls_file) if urls_file else None
         self.headless = headless
         self.max_properties = max_properties
         self.resume_from = resume_from or 0
+        self.city = city
         self.operation_type = operation_type
-        
-        # Configuración de paths
+        self.product = product
+
+        # Configuración de paths básicos
         self.setup_paths()
-        
+
         # Configuración de logging
         self.setup_logging()
-        
-        # Checkpoint system
-        self.checkpoint_file = self.checkpoint_dir / f"lamudi_unico_{operation_type}_checkpoint.pkl"
-        self.checkpoint_interval = 25  # Guardar cada 25 propiedades procesadas
-        
-        # Cargar URLs
+
+        # Cargar URLs y determinar metadata
         self.property_urls = self.load_urls()
         self.properties_data = []
-        
+
+        # Checkpoint system (ahora que conocemos la operación)
+        self.checkpoint_file = self.checkpoint_dir / f"lamudi_unico_{self.operation_type}_checkpoint.pkl"
+        self.checkpoint_interval = 25  # Guardar cada 25 propiedades procesadas
+
         # Performance metrics
         self.start_time = None
         self.properties_processed = 0
         self.successful_extractions = 0
         self.errors_count = 0
-        
+
         self.logger.info(f"🚀 Iniciando Lamudi Unico Professional Scraper")
-        self.logger.info(f"   URLs file: {urls_file}")
+        self.logger.info(f"   URLs file: {self.urls_file}")
         self.logger.info(f"   Total URLs: {len(self.property_urls)}")
-        self.logger.info(f"   Operation: {operation_type}")
+        self.logger.info(f"   City: {self.city}")
+        self.logger.info(f"   Operation: {self.operation_type}")
+        self.logger.info(f"   Product: {self.product}")
         self.logger.info(f"   Max properties: {max_properties}")
         self.logger.info(f"   Resume from: {resume_from}")
         self.logger.info(f"   Headless: {headless}")
@@ -73,12 +84,6 @@ class LamudiUnicoProfessionalScraper:
         self.logs_dir = self.project_root / 'logs'
         self.checkpoint_dir = self.logs_dir / 'checkpoints'
 
-        path_info = build_path('Lam', 'Ciudad', self.operation_type, 'Detalle')
-        self.month_year = path_info.month_year
-        self.run_number = int(path_info.run_number)
-        self.data_dir = path_info.directory
-        self.file_name = path_info.file_name
-
         for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
     
@@ -86,7 +91,7 @@ class LamudiUnicoProfessionalScraper:
     def setup_logging(self):
         """Configurar sistema de logging profesional"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_file = self.logs_dir / f"lamudi_unico_{self.operation_type}_professional_{timestamp}.log"
+        log_file = self.logs_dir / f"lamudi_unico_{self.operation_type or 'unknown'}_professional_{timestamp}.log"
         
         # Configuración de logging
         logging.basicConfig(
@@ -103,27 +108,56 @@ class LamudiUnicoProfessionalScraper:
         self.log_file = log_file
     
     def load_urls(self) -> List[str]:
-        """Cargar URLs desde archivo"""
-        urls = []
-        
+        """Cargar URLs desde archivo y establecer metadata de ruta"""
+        urls: List[str] = []
+
+        data_root = self.project_root / 'data' / 'Lam'
+
         if not self.urls_file:
-            # Buscar el archivo más reciente de URLs con nueva nomenclatura
-            pattern = f"LAM_URLs_*.csv"
-            url_files = list(self.data_dir.glob(pattern))
+            pattern = "LamURL_*_*_*_*_*.csv"
+            search_dir = data_root
+            if self.city and self.operation_type and self.product:
+                search_dir = data_root / self.city / self.operation_type / self.product
+            url_files = list(search_dir.rglob(pattern))
             if url_files:
                 self.urls_file = max(url_files, key=lambda x: x.stat().st_mtime)
                 self.logger.info(f"📂 Usando archivo de URLs más reciente: {self.urls_file}")
             else:
                 self.logger.error("❌ No se encontró archivo de URLs")
                 return []
-        
+
+        self.urls_file = Path(self.urls_file)
+
+        # Extraer metadata del nombre del archivo
+        stem_parts = self.urls_file.stem.split('_')
+        if len(stem_parts) >= 6:
+            _, city, oper, prod, month_year, run = stem_parts[:6]
+            self.city = self.city or city
+            self.operation_type = self.operation_type or oper
+            self.product = self.product or prod
+            self.month_year = month_year
+            self.run_number = run
+        else:
+            self.logger.warning("⚠️  Nombre de archivo de URLs no sigue el patrón esperado")
+
+        # Valores por defecto si faltan
+        self.city = self.city or 'Ciudad'
+        self.operation_type = self.operation_type or 'venta'
+        self.product = self.product or 'Detalle'
+        self.month_year = getattr(self, 'month_year', datetime.now().strftime('%b%y'))
+        self.run_number = getattr(self, 'run_number', '01')
+
+        # Configurar paths finales
+        self.data_dir = self.urls_file.parent
+        self.file_name = f"Lam_{self.city}_{self.operation_type}_{self.product}_{self.month_year}_{self.run_number}.csv"
+
         try:
             with open(self.urls_file, 'r', encoding='utf-8') as f:
                 urls = [line.strip() for line in f if line.strip()]
             self.logger.info(f"📂 Cargadas {len(urls)} URLs desde {self.urls_file}")
         except Exception as e:
             self.logger.error(f"❌ Error cargando URLs: {e}")
-        
+
         return urls
     
     def create_professional_driver(self):
@@ -677,15 +711,19 @@ def main():
     parser = argparse.ArgumentParser(description='Lamudi Unico Professional Scraper')
     parser.add_argument('--urls-file', type=str, default=None,
                        help='Archivo con URLs de propiedades a procesar')
-    parser.add_argument('--headless', action='store_true', default=True, 
+    parser.add_argument('--headless', action='store_true', default=True,
                        help='Ejecutar en modo headless (sin GUI)')
-    parser.add_argument('--properties', type=int, default=None, 
+    parser.add_argument('--properties', type=int, default=None,
                        help='Número máximo de propiedades a procesar')
-    parser.add_argument('--resume', type=int, default=0, 
+    parser.add_argument('--resume', type=int, default=0,
                        help='Índice desde el cual resumir')
-    parser.add_argument('--operation', choices=['venta', 'renta'], default='venta',
+    parser.add_argument('--city', type=str, default=None,
+                       help='Ciudad de las propiedades')
+    parser.add_argument('--operation', choices=['venta', 'renta'], default=None,
                        help='Tipo de operación: venta o renta')
-    parser.add_argument('--gui', action='store_true', 
+    parser.add_argument('--product', type=str, default=None,
+                       help='Producto a procesar (ej. Detalle)')
+    parser.add_argument('--gui', action='store_true',
                        help='Ejecutar con GUI (opuesto a --headless)')
     
     args = parser.parse_args()
@@ -700,7 +738,9 @@ def main():
         headless=args.headless,
         max_properties=args.properties,
         resume_from=args.resume,
-        operation_type=args.operation
+        city=args.city,
+        operation_type=args.operation,
+        product=args.product,
     )
     
     results = scraper.run()
