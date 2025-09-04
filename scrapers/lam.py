@@ -551,11 +551,9 @@ class LamudiProfessionalScraper:
         current = datetime.now()
         month_abbrev = calendar.month_abbr[current.month]
         year_short = current.strftime("%y")
-        city_code = ciudad[:3].upper()
-        op_code_map = {'venta': 'VEN', 'renta': 'REN', 'venta-d': 'VND', 'venta-r': 'VNR'}
-        op_code = op_code_map.get((operation or '').lower(), operacion[:3].upper())
-        product_code = producto[:3].upper()
-        urls_filename = f"LAMURL_{city_code}_{op_code}_{product_code}_{month_abbrev}{year_short}_{run_str}.csv"
+        urls_filename = (
+            f"LamURL_{ciudad}_{operacion}_{producto}_{month_abbrev}{year_short}_{run_str}.csv"
+        )
         urls_path = self.run_dir / urls_filename
         if self.property_urls:
             with open(urls_path, 'w', encoding='utf-8') as f:
