@@ -510,7 +510,7 @@ class EnhancedScrapsRegistry:
         """Obtener la ruta de salida para un scrap específico"""
         website = scrap_data.get('website', '').lower()
         ciudad = scrap_data.get('ciudad', scrap_data.get('city', '')).lower().replace(' ', '_')
-        operacion = scrap_data.get('operacion', scrap_data.get('operation', '')).lower()
+        operacion = scrap_data.get('operacion', '').lower()
         producto = scrap_data.get('producto', scrap_data.get('product', '')).lower().replace(' ', '_')
 
         # Crear estructura de carpetas organizada
@@ -527,7 +527,7 @@ class EnhancedScrapsRegistry:
         """Obtener la ruta de backup en Google Drive"""
         website = scrap_data.get('website', '')
         ciudad = scrap_data.get('ciudad', scrap_data.get('city', '')).replace(' ', '_')
-        operacion = scrap_data.get('operacion', scrap_data.get('operation', ''))
+        operacion = scrap_data.get('operacion', '').replace(' ', '_')
 
         # Estructura para Google Drive
         return f"PropertyScraper/{website}/{ciudad}/{operacion}/"
