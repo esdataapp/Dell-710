@@ -16,8 +16,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
+import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(PROJECT_ROOT))
+sys.path.append(str(PROJECT_ROOT / "utils"))
+from enhanced_scraps_registry import EnhancedScrapsRegistry
 URLS_DIR = PROJECT_ROOT / "URLs"
 
 
@@ -131,14 +135,28 @@ def main() -> None:
         else:
             queued.append(scrap)
 
-    # Determine "Scrap of the Month" based on completed tasks.
-    completed_tasks = [s for s in scraps if s.status.lower() in status_completed]
+    registry = EnhancedScrapsRegistry()
+    som_data = registry.get_scrap_of_month(
+        website=args.pagina_web, city=args.ciudad
+    )
     scrap_of_month: Optional[ScrapEntry] = None
-    if completed_tasks:
-        current_marker = datetime.now().strftime("%Y-%m")
-        marked = [s for s in completed_tasks if s.scrap_of_month == current_marker]
-        candidates = marked or completed_tasks
-        scrap_of_month = max(candidates, key=lambda s: s.records)
+    if som_data:
+        try:
+            records = int(som_data.get("records", 0))
+        except (TypeError, ValueError):
+            records = 0
+        scrap_of_month = ScrapEntry(
+            pagina_web=som_data.get("website", ""),
+            ciudad=som_data.get("ciudad", ""),
+            operacion=som_data.get("operacion", ""),
+            producto=som_data.get("producto", ""),
+            url=som_data.get("url", ""),
+            status=som_data.get("status", ""),
+            last_run=som_data.get("last_run", ""),
+            next_run=som_data.get("next_run", ""),
+            scrap_of_month=som_data.get("scrap_of_month", ""),
+            records=records,
+        )
 
     print(f"\n=== SCRAP STATUS ({month_year}) ===\n")
     if completed:

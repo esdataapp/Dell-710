@@ -377,11 +377,50 @@ class EnhancedScrapsRegistry:
     def get_next_scheduled_scrap(self, website: str = None) -> Optional[Dict]:
         """Obtener el próximo scrap programado"""
         pending_scraps = self.get_pending_scraps(website)
-        
+
         if pending_scraps:
             return pending_scraps[0]
-        
+
         return None
+
+    def get_scrap_of_month(
+        self, website: Optional[str] = None, city: Optional[str] = None
+    ) -> Optional[Dict]:
+        """Obtener el scrap con más registros del mes actual.
+
+        Recorre todas las entradas marcadas con el mes en curso (``YYYY-MM``)
+        y devuelve aquella que tenga el mayor valor en ``Records``. Se puede
+        filtrar opcionalmente por sitio web o ciudad.
+        """
+
+        current_month = datetime.now().strftime("%Y-%m")
+        top_scrap: Optional[Dict] = None
+        max_records = -1
+
+        try:
+            for scrap in self.urls_registry:
+                if website and scrap["website"].lower() != website.lower():
+                    continue
+                if city and scrap["ciudad"].lower() != city.lower():
+                    continue
+
+                if scrap.get("scrap_of_month") != current_month:
+                    continue
+
+                try:
+                    records = int(scrap.get("records", 0))
+                except (TypeError, ValueError):
+                    records = 0
+
+                if records > max_records:
+                    max_records = records
+                    top_scrap = scrap
+
+        except Exception as e:
+            self.logger.error(f"Error obteniendo scrap del mes: {e}")
+            return None
+
+        return top_scrap
     
     def get_statistics(self) -> Dict:
         """Obtener estadísticas del registry"""
