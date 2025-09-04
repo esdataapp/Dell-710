@@ -156,7 +156,8 @@ class EnhancedScrapsRegistry:
             self.logger.warning(f"Directorio de URLs no encontrado: {self.csv_urls_dir}")
             return urls_list
 
-        csv_files = list(self.csv_urls_dir.glob('*.csv'))
+        # Procesar los archivos en orden alfabético para asegurar consistencia
+        csv_files = sorted(self.csv_urls_dir.glob('*.csv'))
         if not csv_files:
             self.logger.warning(f"No se encontraron archivos CSV en {self.csv_urls_dir}")
             return urls_list
@@ -171,7 +172,7 @@ class EnhancedScrapsRegistry:
                         row for row in f if not row.lstrip().startswith('#')
                     )
 
-                    for idx, row in enumerate(reader, 1):
+                    for row_num, row in enumerate(reader, start=1):
                         pagina_web = row.get('PaginaWeb', '').strip()
                         ciudad = row.get('Ciudad', '').strip()
                         operacion = row.get('Operacion', row.get('Operación', '')).strip()
@@ -200,7 +201,8 @@ class EnhancedScrapsRegistry:
                                 'prioridad': self.get_website_priority(pagina_web),
                                 'intervalo_dias': self.get_interval_days(pagina_web),
                                 'activo': True,
-                                'csv_row': idx,
+                                # Guardar el número de fila para respetar el orden del CSV
+                                'csv_row': row_num,
                                 'csv_file': csv_file.name,
                                 'status': row.get('Status', ''),
                                 'last_run': row.get('LastRun', ''),
