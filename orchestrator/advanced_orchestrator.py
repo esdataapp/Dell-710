@@ -287,27 +287,30 @@ class AdvancedOrchestrator:
     def start_scraper_subprocess(self, scrap: Dict) -> Optional[subprocess.Popen]:
         """Método de respaldo usando subprocess"""
         try:
+            website = scrap['website'].lower()
+
             # Determinar el script de scraper a usar
-            scraper_script = self.get_scraper_script(scrap['website'])
+            scraper_script = self.get_scraper_script(website)
             if not scraper_script:
                 self.logger.error(f"❌ No se encontró scraper para {scrap['website']}")
                 return None
-            
-            # Preparar comando
+
+            # Preparar comando para el scraper base
             python_path = "/home/esdata/venv/bin/python"  # Asumiendo venv en servidor
             script_path = f"/home/esdata/PropertyScraper-Dell710/scrapers/{scraper_script}"
-            
+            output_path = self.registry.get_output_path(scrap)
+
             cmd = [
                 python_path, script_path,
                 "--headless",
                 f"--url={scrap['url']}",
-                f"--output={self.registry.get_output_path(scrap)}",
+                f"--output={output_path}",
                 "--pages=50"  # Límite por defecto
             ]
-            
+
             self.logger.info(f"🚀 Iniciando scraper subprocess: {' '.join(cmd)}")
-            
-            # Iniciar proceso
+
+            # Iniciar proceso base
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -315,15 +318,49 @@ class AdvancedOrchestrator:
                 universal_newlines=True,
                 bufsize=1
             )
-            
+
             # Actualizar registry
             self.registry.update_scrap_execution(
                 scrap['id'],
                 'running'
             )
-            
+
+            # Programar ejecución de scraper de detalle si aplica
+            detail_site = self.detail_dependencies.get(website)
+            if detail_site:
+                detail_script = self.get_scraper_script(detail_site)
+
+                if detail_script:
+                    detail_path = f"/home/esdata/PropertyScraper-Dell710/scrapers/{detail_script}"
+
+                    def run_detail_after_base():
+                        try:
+                            return_code = process.wait()
+                            if return_code == 0:
+                                detail_cmd = [
+                                    python_path, detail_path,
+                                    "--headless",
+                                    f"--urls-file={output_path}",
+                                ]
+                                self.logger.info(
+                                    f"📥 Iniciando scraper dependiente {detail_site}: {' '.join(detail_cmd)}"
+                                )
+                                subprocess.Popen(
+                                    detail_cmd,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    universal_newlines=True,
+                                    bufsize=1
+                                )
+                        except Exception as e:
+                            self.logger.error(
+                                f"❌ Error ejecutando scraper dependiente {detail_site}: {e}"
+                            )
+
+                    threading.Thread(target=run_detail_after_base, daemon=True).start()
+
             return process
-            
+
         except Exception as e:
             self.logger.error(f"❌ Error iniciando subprocess para {scrap['website']}: {e}")
             self.registry.update_scrap_execution(scrap['id'], 'failed')
@@ -332,6 +369,15 @@ class AdvancedOrchestrator:
     def get_scraper_script(self, website: str) -> Optional[str]:
         """Obtener el nombre del script de scraper para una página web"""
         scraper_mapping = {
+            'inm24': 'inm24.py',
+            'inm24_det': 'inm24_det.py',
+            'cyt': 'cyt.py',
+            'mit': 'mit.py',
+            'lam': 'lam.py',
+            'lam_det': 'lam_det.py',
+            'prop': 'prop.py',
+            'tro': 'tro.py',
+            # Nombres largos de respaldo
             'inmuebles24': 'inm24.py',
             'casas_y_terrenos': 'cyt.py',
             'mitula': 'mit.py',
