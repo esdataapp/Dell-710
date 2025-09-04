@@ -184,7 +184,7 @@ class AdvancedOrchestrator:
     def get_scraps_for_website(self, website: str) -> List[Dict]:
         """
         Obtener todos los scraps pendientes para una página web específica
-        Ordenados por: operación -> producto
+        Ordenados por: posición en el CSV (csv_row)
         """
         all_scraps = self.registry.load_urls_from_csv()
         
@@ -196,8 +196,8 @@ class AdvancedOrchestrator:
                   datetime.now() >= datetime.fromisoformat(scrap['next_run'])))):
                 website_scraps.append(scrap)
         
-        # Ordenar por operación y producto
-        website_scraps.sort(key=lambda x: (x['operacion'], x['producto']))
+        # Ordenar según la fila en el CSV para preservar el orden definido
+        website_scraps.sort(key=lambda x: x['csv_row'])
         
         return website_scraps
     
