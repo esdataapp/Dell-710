@@ -660,6 +660,44 @@ class LamudiProfessionalScraper:
                 'properties_found': self.properties_found
             }
 
+def run_scraper(url: str, output_path: str, max_pages: int = None) -> Dict:
+    """Interface function for the orchestrator.
+
+    Args:
+        url: Listing URL to scrape.
+        output_path: Path where results should be stored. Used to infer
+            city/operation/product when building directories.
+        max_pages: Optional limit of pages to scrape.
+
+    Returns:
+        Dictionary returned by :meth:`LamudiProfessionalScraper.run`.
+    """
+
+    city = product = None
+    operation_type = 'venta'
+
+    if output_path:
+        out = Path(output_path)
+        city = out.parent.parent.name if out.parent.parent.name else None
+        operation_code = out.parent.name.lower()
+        product = out.stem.split('_')[0]
+        op_map = {'ven': 'venta', 'ren': 'renta', 'vnd': 'venta-d', 'vnr': 'venta-r'}
+        operation_type = op_map.get(operation_code, operation_code)
+
+    scraper = LamudiProfessionalScraper(
+        headless=True,
+        max_pages=max_pages,
+        resume_from=1,
+        operation_type=operation_type,
+        city=city,
+        product=product,
+    )
+
+    if url:
+        scraper.base_url = url
+
+    return scraper.run()
+
 def main():
     """Función principal con argumentos de línea de comandos"""
     parser = argparse.ArgumentParser(description='Lamudi Professional Scraper')

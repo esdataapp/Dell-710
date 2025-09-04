@@ -652,6 +652,30 @@ class LamudiUnicoProfessionalScraper:
                 'successful_extractions': self.successful_extractions
             }
 
+def run_scraper(urls_file: str, output_path: str | None = None,
+                max_properties: int = None) -> Dict:
+    """Interface function for orchestrator usage."""
+
+    operation_type = 'venta'
+    if urls_file:
+        name = Path(urls_file).name.upper()
+        if '_REN_' in name:
+            operation_type = 'renta'
+        elif '_VND_' in name:
+            operation_type = 'venta-d'
+        elif '_VNR_' in name:
+            operation_type = 'venta-r'
+
+    scraper = LamudiUnicoProfessionalScraper(
+        urls_file=urls_file,
+        headless=True,
+        max_properties=max_properties,
+        resume_from=0,
+        operation_type=operation_type,
+    )
+
+    return scraper.run()
+
 def main():
     """Función principal con argumentos de línea de comandos"""
     parser = argparse.ArgumentParser(description='Lamudi Unico Professional Scraper')
