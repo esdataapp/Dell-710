@@ -242,6 +242,26 @@ tail -f /home/scraper/PropertyScraper-Dell710/logs/progress_monitor.log
    `data/orchestrator_state.json` y tareas en cola. Se puede filtrar por
    `PaginaWeb` y `Ciudad` y ordenar la salida.
 
+## 🪟 Ejecución local en Windows 11
+
+### Prerrequisitos
+- Python 3.12+ instalado
+- Google Chrome instalado
+- Asegúrate de que la ruta de Chrome (`C:\\Program Files\\Google\\Chrome\\Application`) esté en la variable de entorno `PATH`
+- Instalar dependencias del proyecto:
+  ```powershell
+  pip install -r requirements.txt
+  ```
+
+### Ejecución en modo headless
+Todos los scrapers se ejecutan en modo headless por defecto. Desde PowerShell:
+
+```powershell
+python -m scrapers.inm24 --headless
+```
+
+El parámetro `--headless` es opcional; utiliza `--headed` para abrir el navegador con interfaz gráfica.
+
 ## 🏆 Resultados Probados
 
 ### Test exitoso - Inmuebles24 (`inm24.py`)
