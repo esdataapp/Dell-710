@@ -61,7 +61,7 @@ class CasasTerrenosProfessionalScraper:
         self.setup_logging()
         
         # Checkpoint system
-        self.checkpoint_file = self.checkpoint_dir / f"casas_terrenos_checkpoint.pkl"
+        self.checkpoint_file = self.checkpoint_dir / f"{self.site_name}_checkpoint.pkl"
         self.checkpoint_interval = 50  # Guardar cada 50 páginas
         
         # Datos del scraping
@@ -96,7 +96,7 @@ class CasasTerrenosProfessionalScraper:
             'next_page': '.pagination .next, .paginacion .siguiente, a[rel="next"]'
         }
         
-        self.logger.info(f"🚀 Iniciando Casas y Terrenos Professional Scraper")
+        self.logger.info(f"🚀 Iniciando {self.site_name} Professional Scraper")
         self.logger.info(f"   URL objetivo: {url}")
         self.logger.info(f"   Archivo salida: {output_path}")
         self.logger.info(f"   Max pages: {max_pages}")
@@ -108,7 +108,7 @@ class CasasTerrenosProfessionalScraper:
         self.project_root = Path(__file__).parent.parent
         self.logs_dir = self.project_root / 'logs'
         self.checkpoint_dir = self.logs_dir / 'checkpoints'
-        self.site_name = 'Cyt'
+        self.site_name = 'CyT'
 
         path_info = build_path(self.site_name, ciudad, operacion, producto)
         self.month_year = path_info.month_year
@@ -123,7 +123,7 @@ class CasasTerrenosProfessionalScraper:
     def setup_logging(self):
         """Configurar sistema de logging profesional"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_file = self.logs_dir / f"casas_terrenos_professional_{timestamp}.log"
+        log_file = self.logs_dir / f"{self.site_name}_professional_{timestamp}.log"
         
         # Configuración de logging
         logging.basicConfig(
@@ -246,7 +246,7 @@ class CasasTerrenosProfessionalScraper:
                         'timestamp': datetime.now().isoformat(),
                         'source_url': self.target_url,
                         'source_page': sb.get_current_url(),
-                        'fuente': 'Casas_y_terrenos'
+                        'fuente': self.site_name
                     }
                     
                     # Título/Descripción
@@ -610,7 +610,7 @@ class CasasTerrenosProfessionalScraper:
     
     def run(self) -> Dict:
         """Ejecutar scraping completo y retornar resultados"""
-        self.logger.info("🚀 Iniciando scraping profesional de casasyterrenos.com")
+        self.logger.info(f"🚀 Iniciando scraping profesional de {self.site_name}")
         self.logger.info("="*70)
         
         try:
