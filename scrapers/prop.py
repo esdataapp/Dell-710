@@ -116,6 +116,7 @@ class PropiedadesProfessionalScraper:
         self.month_year = path_info.month_year
         self.run_number = int(path_info.run_number)
         self.data_dir = path_info.directory
+        self.file_name = path_info.file_name
 
         for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
@@ -476,13 +477,8 @@ class PropiedadesProfessionalScraper:
         # Generar timestamp para archivos
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-        run_str = f"{self.run_number:02d}"
-        current = datetime.now()
-        month_abbrev = calendar.month_abbr[current.month]
-        year_short = current.strftime("%y")
-
         # Archivo CSV principal con nueva nomenclatura
-        csv_filename = f"prop_{month_abbrev}{year_short}_{run_str}.csv"
+        csv_filename = self.file_name
         csv_path = self.data_dir / csv_filename
         
         # Guardar CSV

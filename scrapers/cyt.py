@@ -115,6 +115,7 @@ class CasasTerrenosProfessionalScraper:
         self.run_number = int(path_info.run_number)
         self.run_dir = path_info.directory
         self.data_dir = self.run_dir
+        self.file_name = path_info.file_name
 
         for directory in [self.logs_dir, self.checkpoint_dir]:
             directory.mkdir(parents=True, exist_ok=True)
@@ -585,19 +586,10 @@ class CasasTerrenosProfessionalScraper:
             self.logger.warning("⚠️  No hay datos para guardar")
             return None
 
-        ciudad_cap = ciudad.capitalize()
-        operacion_cap = operacion.capitalize()
-        producto_cap = producto.capitalize()
-
-        run_str = f"{self.run_number:02d}"
         if self.output_path:
             csv_path = Path(self.output_path)
         else:
-            filename = (
-                f"{self.site_name}_{ciudad_cap}_{operacion_cap}_{producto_cap}_"
-                f"{self.month_year}_{run_str}.csv"
-            )
-            csv_path = self.run_dir / filename
+            csv_path = self.run_dir / self.file_name
 
         csv_path.parent.mkdir(parents=True, exist_ok=True)
 

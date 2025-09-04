@@ -39,10 +39,10 @@ def build_path(pagina_web: str, ciudad: str, operacion: str, producto: str) -> P
     base_dir = (
         project_root
         / "data"
-        / pagina_web.capitalize()
-        / ciudad.capitalize()
-        / operacion.capitalize()
-        / producto.capitalize()
+        / pagina_web
+        / ciudad
+        / operacion
+        / producto
         / month_year
     )
 
@@ -54,5 +54,8 @@ def build_path(pagina_web: str, ciudad: str, operacion: str, producto: str) -> P
     final_dir = base_dir / run_str
     final_dir.mkdir(parents=True, exist_ok=True)
 
-    file_name = f"{pagina_web.lower()}_{month_year}_{run_str}.csv"
+    file_name = (
+        f"{pagina_web}_{ciudad}_{operacion}_{producto}_"
+        f"{month_year}_{run_str}.csv"
+    )
     return PathInfo(final_dir, file_name, month_year, run_str)
