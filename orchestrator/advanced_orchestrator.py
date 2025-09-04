@@ -454,11 +454,18 @@ class AdvancedOrchestrator:
         """Construir la ruta de salida para una tarea"""
         safe_city = task['ciudad'].lower().replace(' ', '_')
         safe_product = task['producto'].lower().replace(' ', '_')
-        operation = task['operacion']
+        operacion = task['operacion']
         website = task['website']
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-        output_dir = Path(__file__).parent.parent / 'data' / 'batch_csv' / website / safe_city / operation
+        output_dir = (
+            Path(__file__).parent.parent
+            / 'data'
+            / 'batch_csv'
+            / website
+            / safe_city
+            / operacion
+        )
         output_dir.mkdir(parents=True, exist_ok=True)
         return str(output_dir / f"{safe_product}_{timestamp}.csv")
 
