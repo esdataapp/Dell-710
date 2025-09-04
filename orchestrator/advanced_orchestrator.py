@@ -185,7 +185,7 @@ class AdvancedOrchestrator:
         Obtener todos los scraps pendientes para una página web específica
         Ordenados por: operación -> producto
         """
-        all_scraps = self.registry.load_scraps_from_csv()
+        all_scraps = self.registry.load_urls_from_csv()
         
         website_scraps = []
         for scrap in all_scraps:
@@ -196,7 +196,7 @@ class AdvancedOrchestrator:
                 website_scraps.append(scrap)
         
         # Ordenar por operación y producto
-        website_scraps.sort(key=lambda x: (x['operation'], x['product']))
+        website_scraps.sort(key=lambda x: (x['operacion'], x['producto']))
         
         return website_scraps
     
@@ -212,7 +212,7 @@ class AdvancedOrchestrator:
             scraper_func = self.scraper_functions.get(website)
             if not scraper_func:
                 self.logger.error(f"❌ Scraper no disponible para {website}")
-                self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
+                self.registry.update_scrap_execution(scrap['id'], 'failed')
                 return None
 
             url = scrap['url']
@@ -222,10 +222,9 @@ class AdvancedOrchestrator:
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
             # Actualizar registry a running
-            self.registry.update_scrap_status(
-                scrap['scrap_id'],
-                'running',
-                last_run=datetime.now().isoformat()
+            self.registry.update_scrap_execution(
+                scrap['id'],
+                'running'
             )
 
             # Ejecutar scraper en hilo separado
@@ -240,7 +239,7 @@ class AdvancedOrchestrator:
             
         except Exception as e:
             self.logger.error(f"❌ Error iniciando scraper para {scrap['website']}: {e}")
-            self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
+            self.registry.update_scrap_execution(scrap['id'], 'failed')
             return None
     
     def run_scraper_thread(self, website: str, scraper_func, url: str, output_path: str, scrap: Dict):
@@ -261,8 +260,8 @@ class AdvancedOrchestrator:
             # Actualizar estado según resultado
             if result.get('success', False):
                 self.logger.info(f"✅ Scraper completado: {website}")
-                self.registry.update_scrap_status(
-                    scrap['scrap_id'],
+                self.registry.update_scrap_execution(
+                    scrap['id'],
                     'completed',
                     records_extracted=result.get('properties_found', 0),
                     execution_time_minutes=int(result.get('total_time_seconds', 0) / 60)
@@ -291,12 +290,12 @@ class AdvancedOrchestrator:
 
             else:
                 self.logger.error(f"❌ Scraper falló: {website}")
-                self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
+                self.registry.update_scrap_execution(scrap['id'], 'failed')
                 self.failed_scrapers.append(scrap)
 
         except Exception as e:
             self.logger.error(f"❌ Error en scraper thread {website}: {e}")
-            self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
+            self.registry.update_scrap_execution(scrap['id'], 'failed')
             self.failed_scrapers.append(scrap)
     
     def start_scraper_subprocess(self, scrap: Dict) -> Optional[subprocess.Popen]:
@@ -332,17 +331,16 @@ class AdvancedOrchestrator:
             )
             
             # Actualizar registry
-            self.registry.update_scrap_status(
-                scrap['scrap_id'], 
-                'running',
-                last_run=datetime.now().isoformat()
+            self.registry.update_scrap_execution(
+                scrap['id'],
+                'running'
             )
             
             return process
             
         except Exception as e:
             self.logger.error(f"❌ Error iniciando subprocess para {scrap['website']}: {e}")
-            self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
+            self.registry.update_scrap_execution(scrap['id'], 'failed')
             return None
     
     def get_scraper_script(self, website: str) -> Optional[str]:
@@ -373,8 +371,8 @@ class AdvancedOrchestrator:
                 if return_code == 0:
                     # Éxito
                     self.logger.info(f"✅ Scraper completado exitosamente: {website}")
-                    self.registry.update_scrap_status(
-                        scrap['scrap_id'], 
+                    self.registry.update_scrap_execution(
+                        scrap['id'],
                         'completed',
                         execution_time_minutes=int((datetime.now() - datetime.fromisoformat(scrap['last_run'])).total_seconds() / 60)
                     )
@@ -386,7 +384,7 @@ class AdvancedOrchestrator:
                 else:
                     # Error
                     self.logger.error(f"❌ Scraper falló: {website} (código: {return_code})")
-                    self.registry.update_scrap_status(scrap['scrap_id'], 'failed')
+                    self.registry.update_scrap_execution(scrap['id'], 'failed')
                     self.failed_scrapers.append(scrap)
                 
                 completed_websites.append(website)
@@ -403,17 +401,17 @@ class AdvancedOrchestrator:
             
         try:
             # Determinar directorio de datos
-            data_dir = f"/home/esdata/PropertyScraper-Dell710/data/{website}/{scrap['operation']}"
+            data_dir = f"/home/esdata/PropertyScraper-Dell710/data/{website}/{scrap['operacion']}"
             
             # Ejecutar backup en hilo separado para no bloquear
             backup_thread = threading.Thread(
                 target=self.backup_manager.backup_website_data,
-                args=(website, scrap['operation']),
+                args=(website, scrap['operacion']),
                 daemon=True
             )
             backup_thread.start()
             
-            self.logger.info(f"☁️ Backup programado para {website}/{scrap['operation']}")
+            self.logger.info(f"☁️ Backup programado para {website}/{scrap['operacion']}")
             
         except Exception as e:
             self.logger.error(f"❌ Error programando backup: {e}")
@@ -441,9 +439,9 @@ class AdvancedOrchestrator:
 
                         task = {
                             'website': website.lower(),
-                            'city': row.get('Ciudad', '').strip(),
-                            'operation': (row.get('Operación') or row.get('Operacion') or row.get('Operacin') or '').strip().lower(),
-                            'product': row.get('ProductoPaginaWeb', '').strip(),
+                            'ciudad': row.get('Ciudad', '').strip(),
+                            'operacion': (row.get('Operación') or row.get('Operacion') or row.get('Operacin') or '').strip().lower(),
+                            'producto': row.get('ProductoPaginaWeb', '').strip(),
                             'url': url
                         }
                         tasks_by_site.setdefault(task['website'], []).append(task)
@@ -454,9 +452,9 @@ class AdvancedOrchestrator:
 
     def build_output_path(self, task: Dict) -> str:
         """Construir la ruta de salida para una tarea"""
-        safe_city = task['city'].lower().replace(' ', '_')
-        safe_product = task['product'].lower().replace(' ', '_')
-        operation = task['operation']
+        safe_city = task['ciudad'].lower().replace(' ', '_')
+        safe_product = task['producto'].lower().replace(' ', '_')
+        operation = task['operacion']
         website = task['website']
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -648,7 +646,7 @@ class AdvancedOrchestrator:
         for website, info in self.active_scrapers.items():
             elapsed = datetime.now() - info['started_at']
             scrap = info['scrap']
-            print(f"   🌐 {website:15} | {scrap['operation']:5} | {scrap['product']:20} | ⏱️ {str(elapsed).split('.')[0]}")
+            print(f"   🌐 {website:15} | {scrap['operacion']:5} | {scrap['producto']:20} | ⏱️ {str(elapsed).split('.')[0]}")
         
         print(f"\n📊 Registry Stats:")
         print(f"   ✅ Completed: {stats['completed']:3d}")
@@ -708,7 +706,7 @@ class AdvancedOrchestrator:
                     process.wait()
                 
                 # Actualizar estado a pausado para reanudar después
-                self.registry.update_scrap_status(scrap['scrap_id'], 'paused')
+                self.registry.update_scrap_execution(scrap['id'], 'paused')
                 
             except Exception as e:
                 self.logger.error(f"❌ Error terminando {website}: {e}")
@@ -727,7 +725,7 @@ class AdvancedOrchestrator:
         self.logger.info("🔄 Reanudando desde checkpoint...")
         
         # Cargar scraps pausados
-        scraps = self.registry.load_scraps_from_csv()
+        scraps = self.registry.load_urls_from_csv()
         paused_scraps = [s for s in scraps if s['status'] == 'paused']
         
         if paused_scraps:
@@ -735,7 +733,7 @@ class AdvancedOrchestrator:
             
             # Cambiar estado a pending para que sean procesados
             for scrap in paused_scraps:
-                self.registry.update_scrap_status(scrap['scrap_id'], 'pending')
+                self.registry.update_scrap_execution(scrap['id'], 'pending')
         
         # Iniciar orquestación normal
         self.run_orchestration()
