@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from path_builder import build_path, PathInfo
 from url_utils import extract_url_column
 
 class EnhancedScrapsRegistry:
@@ -509,30 +510,30 @@ class EnhancedScrapsRegistry:
         return progress
     
     def get_output_path(self, scrap_data: Dict) -> Path:
-        """Obtener la ruta de salida para un scrap específico"""
-        website = scrap_data.get('website', '').lower()
-        ciudad = scrap_data.get('ciudad', scrap_data.get('city', '')).lower().replace(' ', '_')
-        operacion = scrap_data.get('operacion', '').lower()
-        producto = scrap_data.get('producto', scrap_data.get('product', '')).lower().replace(' ', '_')
+        """Obtener la ruta de salida para un scrap específico."""
+        pagina_web = scrap_data.get('website', '')
+        ciudad = scrap_data.get('ciudad', scrap_data.get('city', ''))
+        operacion = scrap_data.get('operacion', '')
+        producto = scrap_data.get('producto', scrap_data.get('product', ''))
 
-        # Crear estructura de carpetas organizada
-        output_dir = self.project_root / 'data' / website / ciudad / operacion
-        output_dir.mkdir(exist_ok=True, parents=True)
-        
-        # Nombre del archivo con timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{producto}_{timestamp}.csv"
-        
-        return output_dir / filename
-    
+        path_info: PathInfo = build_path(pagina_web, ciudad, operacion, producto)
+        scrap_data['path_info'] = path_info
+
+        return path_info.directory / path_info.file_name
+
     def get_backup_path(self, scrap_data: Dict) -> str:
-        """Obtener la ruta de backup en Google Drive"""
-        website = scrap_data.get('website', '')
-        ciudad = scrap_data.get('ciudad', scrap_data.get('city', '')).replace(' ', '_')
-        operacion = scrap_data.get('operacion', '').replace(' ', '_')
+        """Obtener la ruta de backup en Google Drive."""
+        path_info: PathInfo = scrap_data.get('path_info')
+        if path_info is None:
+            pagina_web = scrap_data.get('website', '')
+            ciudad = scrap_data.get('ciudad', scrap_data.get('city', ''))
+            operacion = scrap_data.get('operacion', '')
+            producto = scrap_data.get('producto', scrap_data.get('product', ''))
+            path_info = build_path(pagina_web, ciudad, operacion, producto)
+            scrap_data['path_info'] = path_info
 
-        # Estructura para Google Drive
-        return f"PropertyScraper/{website}/{ciudad}/{operacion}/"
+        relative_dir = path_info.directory.relative_to(self.project_root / 'data')
+        return f"PropertyScraper/{relative_dir}/{path_info.file_name}"
     
     def export_registry_report(self) -> str:
         """Exportar reporte completo del registry"""
